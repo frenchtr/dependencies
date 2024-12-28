@@ -53,6 +53,14 @@ namespace TravisRFrench.Dependencies.Runtime.Binding
             throw new NotImplementedException();
         }
 
+        public BindingBuilder<TInterface> FromNew<TImplementation>() where TImplementation : TInterface
+        {
+            this.SourceType = SourceType.FromNew;
+            this.BuildAndRegisterBinding();
+            
+            return this;
+        }
+
         public BindingBuilder<TInterface> FromResolve<TImplementation>()
         {
             this.SourceType = SourceType.FromResolve;

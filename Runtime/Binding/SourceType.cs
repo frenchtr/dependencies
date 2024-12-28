@@ -5,5 +5,6 @@
         FromResolve,
         FromInstance,
         FromFactory,
+        FromNew
     }
 }

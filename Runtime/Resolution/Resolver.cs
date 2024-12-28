@@ -46,6 +46,7 @@ namespace TravisRFrench.Dependencies.Runtime.Resolution
                 var resolvedInstance = binding.SourceType switch
                 {
                     SourceType.FromInstance => binding.Instance,
+                    SourceType.FromNew => this.ResolveFromNew(binding),
                     SourceType.FromFactory => this.ResolveFromFactory(binding),
                     _ => this.ResolveFromNew(binding) // Handles FromType and similar cases
                 };
