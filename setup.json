@@ -1,0 +1,19 @@
+{
+    "package": {
+        "name":"unity-package-template",
+        "displayName": "Unity Package Template",
+        "version": "0.0.0",
+        "unityVersion": "",
+        "description": "A template for creating Unity packages.",
+        "url": "https://github.com/frenchtr/unity-package-template"
+    },
+
+    "organization": {
+        "name": "travisrfrench",
+        "displayName": "TravisRFrench"
+    },
+
+    "author": {
+        "name": "Travis R. French"
+    }
+}
