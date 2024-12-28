@@ -1,6 +1,6 @@
 {
     "name": "TravisRFrench.Dependencies.Runtime",
-    "rootNamespace": "TravisRFrench.Dependencies.Runtime",
+    "rootNamespace": "TravisRFrench.Dependencies",
     "references": [],
     "includePlatforms": [],
     "excludePlatforms": [],

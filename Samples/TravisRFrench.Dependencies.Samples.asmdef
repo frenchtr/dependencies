@@ -1,10 +1,10 @@
 {
-    "name": "TravisRFrench.Dependencies.Editor",
+    "name": "TravisRFrench.Dependencies.Samples",
     "rootNamespace": "TravisRFrench.Dependencies",
-    "references": [],
-    "includePlatforms": [
-        "Editor"
+    "references": [
+        "GUID:e69b1fec482354f48bdec01c775fdd16"
     ],
+    "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,

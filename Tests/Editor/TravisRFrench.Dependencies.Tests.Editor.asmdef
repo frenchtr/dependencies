@@ -1,6 +1,6 @@
 {
     "name": "TravisRFrench.Dependencies.Tests.Editor",
-    "rootNamespace": "TravisRFrench.Dependencies.Tests.Editor",
+    "rootNamespace": "TravisRFrench.Dependencies",
     "references": [
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
