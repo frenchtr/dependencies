@@ -1,11 +1,6 @@
-﻿using System;
-
-namespace TravisRFrench.Dependencies
+﻿namespace TravisRFrench.Dependencies.Runtime
 {
-    public interface IContainer
+    public interface IContainer : IRegistry, IResolver, IInjector
     {
-        void Register<T>(T obj);
-        object Resolve(Type type);
-        T Resolve<T>();
     }
 }

@@ -3,7 +3,8 @@
     "rootNamespace": "TravisRFrench.Dependencies",
     "references": [
         "UnityEngine.TestRunner",
-        "UnityEditor.TestRunner"
+        "UnityEditor.TestRunner",
+        "TravisRFrench.Dependencies.Runtime"
     ],
     "includePlatforms": [
         "Editor"

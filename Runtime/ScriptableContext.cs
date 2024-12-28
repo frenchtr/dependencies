@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace TravisRFrench.Dependencies
+namespace TravisRFrench.Dependencies.Runtime
 {
     [CreateAssetMenu(menuName = "Scriptables/Dependencies/Context")]
     public class ScriptableContext : ScriptableObject, IContext

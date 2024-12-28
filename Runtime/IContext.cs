@@ -1,4 +1,4 @@
-﻿namespace TravisRFrench.Dependencies
+﻿namespace TravisRFrench.Dependencies.Runtime
 {
     public interface IContext
     {

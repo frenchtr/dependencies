@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using TravisRFrench.Dependencies.Runtime;
+using UnityEngine;
 
 namespace TravisRFrench.Dependencies.Samples
 {
@@ -19,6 +20,13 @@ namespace TravisRFrench.Dependencies.Samples
             
             container.Register(gameService);
             container.Register(this.player);
+
+            var behaviours = this.GetComponents<MonoBehaviour>();
+            
+            foreach (var behaviour in behaviours)
+            {
+                container.Inject(behaviour);
+            }
         }
     }
 }
