@@ -2,11 +2,18 @@
 
 namespace TravisRFrench.Dependencies.Samples
 {
-    public class GameService
+    public class GameService : IGameService
     {
+        private readonly ILogger logger;
+
+        public GameService(ILogger logger)
+        {
+            this.logger = logger;
+        }
+        
         public void StartGame()
         {
-            Debug.Log($"Game has been started.");
+            this.logger.Log($"Game has been started.");
         }
     }
 }

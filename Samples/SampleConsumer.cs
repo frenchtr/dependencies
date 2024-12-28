@@ -8,7 +8,7 @@ namespace TravisRFrench.Dependencies.Samples
     public class SampleConsumer : MonoBehaviour
     {
         [Inject]
-        private GameService gameService;
+        private IGameService gameService;
         [Inject]
         private GameObject player;
         

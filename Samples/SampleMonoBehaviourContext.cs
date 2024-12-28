@@ -18,12 +18,13 @@ namespace TravisRFrench.Dependencies.Samples
             this.context.Initialize();
             
             var container = this.context.Container;
-            var gameService = new GameService();
-            
+
+            container.Bind<ILogger>()
+                .To<DebugLogger>();
+
             container
-                .Bind<GameService>()
-                .ToSelf()
-                .FromInstance(gameService);
+                .Bind<IGameService>()
+                .To<GameService>();
             
             container
                 .Bind<GameObject>()
