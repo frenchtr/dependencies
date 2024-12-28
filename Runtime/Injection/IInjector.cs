@@ -2,6 +2,6 @@
 {
     public interface IInjector
     {
-        void Inject<T>(T obj);
+        void Inject<T>(T target);
     }
 }

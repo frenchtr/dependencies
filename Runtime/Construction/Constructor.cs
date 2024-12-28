@@ -21,11 +21,18 @@ namespace TravisRFrench.Dependencies.Runtime.Construction
         
         public object Construct(Type type)
         {
-            var constructor = this.GetBestConstructor(type);
-            var parameters = constructor.GetParameters();
-            var arguments = this.ResolveArguments(parameters);
+            try
+            {
+                var constructor = this.GetBestConstructor(type);
+                var parameters = constructor.GetParameters();
+                var arguments = this.ResolveArguments(parameters);
 
-            return constructor.Invoke(arguments);
+                return constructor.Invoke(arguments);
+            }
+            catch (Exception exception)
+            {
+                throw new ConstructException(type, $"Failed to construct object of type {type}. {exception.Message}".TrimEnd(), exception);
+            }
         }
 
         private ConstructorInfo GetBestConstructor(Type type)
@@ -40,7 +47,7 @@ namespace TravisRFrench.Dependencies.Runtime.Construction
 
             if (!resolvableConstructors.Any())
             {
-                throw new InvalidOperationException($"No suitable constructor found for type {type.FullName}.");
+                throw new ConstructException(type, $"No suitable constructor found for type {type.FullName}.");
             }
 
             // Step 2: Prioritize constructors with [Inject] attribute
@@ -67,7 +74,6 @@ namespace TravisRFrench.Dependencies.Runtime.Construction
 
         private bool CanResolve(Type parameterType)
         {
-            // Check if the parameter type can be resolved from the container
             return this.scope.Get(parameterType) != null;
         }
         
@@ -78,7 +84,15 @@ namespace TravisRFrench.Dependencies.Runtime.Construction
             for (var i = 0; i < parameters.Length; i++)
             {
                 var parameter = parameters[i];
-                arguments[i] = this.resolver.Resolve(parameter.ParameterType);
+                
+                try
+                {
+                    arguments[i] = this.resolver.Resolve(parameter.ParameterType);
+                }
+                catch (Exception exception)
+                {
+                    throw new ConstructException(parameter.ParameterType, $"Failed to resolve parameter {parameter.Name}. {exception.Message}".TrimEnd(), exception);
+                }
             }
             
             return arguments;

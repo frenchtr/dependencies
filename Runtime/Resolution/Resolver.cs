@@ -10,8 +10,8 @@ namespace TravisRFrench.Dependencies.Runtime.Resolution
     {
         private readonly IScope scope;
         private readonly Stack<Type> resolveStack;
-        private Dictionary<Type, object> singletons;
-        private IConstructor constructor;
+        private readonly Dictionary<Type, object> singletons;
+        private readonly IConstructor constructor;
         
         public Resolver(IScope scope, Stack<Type> resolveStack)
         {
@@ -47,7 +47,7 @@ namespace TravisRFrench.Dependencies.Runtime.Resolution
                 {
                     SourceType.FromInstance => binding.Instance,
                     SourceType.FromFactory => this.ResolveFromFactory(binding),
-                    _ => this.ResolveFromType(binding) // Handles FromType and similar cases
+                    _ => this.ResolveFromNew(binding) // Handles FromType and similar cases
                 };
 
                 // Step 4: Handle Lifetime
@@ -57,7 +57,7 @@ namespace TravisRFrench.Dependencies.Runtime.Resolution
             }
             catch (Exception exception)
             {
-                throw new ResolveException(type, $"Failed to resolve type {type}.", exception);
+                throw new ResolveException(type, $"Failed to resolve type {type}. {exception.Message}".TrimEnd(), exception);
             }
             finally
             {
@@ -68,16 +68,9 @@ namespace TravisRFrench.Dependencies.Runtime.Resolution
         private object ResolveFromFactory(IBinding binding)
         {
             throw new NotImplementedException();
-
-            // if (binding.Instance is Func<object> factory)
-            // {
-            //     return factory();
-            // }
-            //
-            // throw new ResolveException(binding.InterfaceType, "The binding's factory method is null or invalid.");
         }
 
-        private object ResolveFromType(IBinding binding)
+        private object ResolveFromNew(IBinding binding)
         {
             return this.constructor.Construct(binding.ImplementationType);
         }

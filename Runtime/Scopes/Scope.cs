@@ -52,9 +52,9 @@ namespace TravisRFrench.Dependencies.Runtime.Scopes
             return this.resolver.Resolve<T>();
         }
 
-        public void Inject<T>(T obj)
+        public void Inject<T>(T target)
         {
-            this.injector.Inject(obj);
+            this.injector.Inject(target);
         }
     }
 }

@@ -14,19 +14,26 @@ namespace TravisRFrench.Dependencies.Runtime.Injection
             this.resolver = resolver;
         }
 
-        public void Inject<T>(T obj)
+        public void Inject<T>(T target)
         {
-            const BindingFlags flags =
-                BindingFlags.Instance |
-                BindingFlags.Static |
-                BindingFlags.Public |
-                BindingFlags.NonPublic;
+            try
+            {
+                const BindingFlags flags =
+                    BindingFlags.Instance |
+                    BindingFlags.Static |
+                    BindingFlags.Public |
+                    BindingFlags.NonPublic;
 
-            var type = obj.GetType();
+                var type = target.GetType();
             
-            this.InjectFields(type, obj, flags);
-            this.InjectProperties(type, obj, flags);
-            this.InjectMethods(type, obj, flags);
+                this.InjectFields(type, target, flags);
+                this.InjectProperties(type, target, flags);
+                this.InjectMethods(type, target, flags);
+            }
+            catch (Exception exception)
+            {
+                throw new InjectException(target, $"Failed to inject dependencies into object of type {typeof(T)}. {exception.Message}".TrimEnd(), exception);
+            }
         }
 
         private void InjectFields(Type type, object obj, BindingFlags flags)
@@ -34,10 +41,17 @@ namespace TravisRFrench.Dependencies.Runtime.Injection
             var fields = type.GetFields(flags);
             foreach (var field in fields)
             {
-                if (field.GetCustomAttribute<InjectAttribute>() != null)
+                try
                 {
-                    var value = this.resolver.Resolve(field.FieldType);
-                    field.SetValue(obj, value);
+                    if (field.GetCustomAttribute<InjectAttribute>() != null)
+                    {
+                        var value = this.resolver.Resolve(field.FieldType);
+                        field.SetValue(obj, value);
+                    }
+                }
+                catch (Exception exception)
+                {
+                    throw new InjectException(obj, $"Failed to inject field {field.Name}. {exception.Message}".TrimEnd(), exception);
                 }
             }
         }
@@ -47,10 +61,17 @@ namespace TravisRFrench.Dependencies.Runtime.Injection
             var properties = type.GetProperties(flags);
             foreach (var property in properties)
             {
-                if (property.GetCustomAttribute<InjectAttribute>() != null && property.CanWrite)
+                try
                 {
-                    var value = this.resolver.Resolve(property.PropertyType);
-                    property.SetValue(obj, value);
+                    if (property.GetCustomAttribute<InjectAttribute>() != null && property.CanWrite)
+                    {
+                        var value = this.resolver.Resolve(property.PropertyType);
+                        property.SetValue(obj, value);
+                    }
+                }
+                catch (Exception exception)
+                {
+                    throw new InjectException(obj, $"Failed to inject property {property.Name}. {exception.Message}".TrimEnd(), exception);
                 }
             }
         }
@@ -60,12 +81,19 @@ namespace TravisRFrench.Dependencies.Runtime.Injection
             var methods = type.GetMethods(flags);
             foreach (var method in methods)
             {
-                if (method.GetCustomAttribute<InjectAttribute>() != null)
+                try
                 {
-                    var parameters = method.GetParameters()
-                        .Select(param => this.resolver.Resolve(param.ParameterType))
-                        .ToArray();
-                    method.Invoke(obj, parameters);
+                    if (method.GetCustomAttribute<InjectAttribute>() != null)
+                    {
+                        var parameters = method.GetParameters()
+                            .Select(param => this.resolver.Resolve(param.ParameterType))
+                            .ToArray();
+                        method.Invoke(obj, parameters);
+                    }
+                }
+                catch (Exception exception)
+                {
+                    throw new InjectException(obj, $"Failed to inject method {method.Name}. {exception.Message}".TrimEnd(), exception);
                 }
             }
         }

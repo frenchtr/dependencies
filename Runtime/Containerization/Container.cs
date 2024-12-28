@@ -46,9 +46,9 @@ namespace TravisRFrench.Dependencies.Runtime.Containerization
             return this.CurrentScope.Resolve<T>();
         }
 
-        public void Inject<T>(T obj)
+        public void Inject<T>(T target)
         {
-            this.CurrentScope.Inject(obj);
+            this.CurrentScope.Inject(target);
         }
 
         public IScope PushScope()
