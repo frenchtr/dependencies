@@ -10,6 +10,7 @@ namespace TravisRFrench.Dependencies.Runtime.Binding
         public Type InterfaceType { get; }
         public Type ImplementationType { get; private set; }
         public TInterface Instance { get; private set; }
+        public Func<TInterface> Factory { get; private set; }
         public SourceType SourceType { get; private set; }
         public Lifetime Lifetime { get; private set; }
 
@@ -47,10 +48,13 @@ namespace TravisRFrench.Dependencies.Runtime.Binding
             return this;
         }
 
-        public BindingBuilder<TInterface> FromFactory<TImplementation>(Func<TImplementation> factory)
-            where TImplementation : TInterface
+        public BindingBuilder<TInterface> FromFactory(Func<TInterface> factory)
         {
-            throw new NotImplementedException();
+            this.Factory = factory;
+            this.SourceType = SourceType.FromFactory;
+            this.BuildAndRegisterBinding();
+            
+            return this;
         }
 
         public BindingBuilder<TInterface> FromNew<TImplementation>() where TImplementation : TInterface
@@ -87,13 +91,15 @@ namespace TravisRFrench.Dependencies.Runtime.Binding
 
         private void BuildAndRegisterBinding()
         {
-            var binding = new Binding(
-                this.InterfaceType,
-                this.ImplementationType,
-                this.Instance,
-                this.SourceType,
-                this.Lifetime
-                );
+            var factory = this.Factory as Func<object>; 
+            var binding = this.SourceType switch
+            {
+                SourceType.FromNew => new(this.InterfaceType, this.ImplementationType, this.SourceType, this.Lifetime),
+                SourceType.FromInstance => new(this.InterfaceType, this.ImplementationType, this.Instance, this.SourceType, this.Lifetime),
+                SourceType.FromFactory => new(this.InterfaceType, this.ImplementationType, factory: factory, this.SourceType, this.Lifetime),
+                SourceType.FromResolve => new Binding(this.InterfaceType, this.ImplementationType, this.SourceType, this.Lifetime),
+                _ => throw new ArgumentOutOfRangeException()
+            };
             
             this.container.Register(binding);
         }

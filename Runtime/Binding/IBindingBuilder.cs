@@ -8,8 +8,8 @@ namespace TravisRFrench.Dependencies.Runtime.Binding
         BindingBuilder<TInterface> ToSelf();
         BindingBuilder<TInterface> FromInstance<TImplementation>(TImplementation instance)
             where TImplementation : TInterface;
-        BindingBuilder<TInterface> FromFactory<TImplementation>(Func<TImplementation> factory)
-            where TImplementation : TInterface;
+
+        BindingBuilder<TInterface> FromFactory(Func<TInterface> factory);
         BindingBuilder<TInterface> FromNew<TImplementation>()
             where TImplementation : TInterface;
         BindingBuilder<TInterface> FromResolve<TImplementation>();

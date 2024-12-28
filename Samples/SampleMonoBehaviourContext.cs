@@ -31,12 +31,23 @@ namespace TravisRFrench.Dependencies.Samples
                 .ToSelf()
                 .FromInstance(this.player);
 
+            container
+                .Bind<Rigidbody>()
+                .ToSelf()
+                .FromFactory(this.MyFactory);
+
             var behaviours = this.GetComponents<MonoBehaviour>();
             
             foreach (var behaviour in behaviours)
             {
                 container.Inject(behaviour);
             }
+        }
+
+        private Rigidbody MyFactory()
+        {
+            var rb = this.gameObject.AddComponent<Rigidbody>();
+            return rb;
         }
     }
 }

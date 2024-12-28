@@ -68,7 +68,7 @@ namespace TravisRFrench.Dependencies.Runtime.Resolution
 
         private object ResolveFromFactory(IBinding binding)
         {
-            throw new NotImplementedException();
+            return binding.Factory.Invoke();
         }
 
         private object ResolveFromNew(IBinding binding)

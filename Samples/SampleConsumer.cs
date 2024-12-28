@@ -11,6 +11,8 @@ namespace TravisRFrench.Dependencies.Samples
         private IGameService gameService;
         [Inject]
         private GameObject player;
+        [Inject]
+        private Rigidbody rigidbody;
         
         private void OnEnable()
         {
