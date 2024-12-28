@@ -1,11 +1,13 @@
 {
-    "name": "TravisRFrench.UnityPackageTemplate.Tests.Runtime",
-    "rootNamespace": "TravisRFrench.UnityPackageTemplate.Tests.Runtime",
+    "name": "TravisRFrench.Dependencies.Tests.Editor",
+    "rootNamespace": "TravisRFrench.Dependencies.Tests.Editor",
     "references": [
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],
-    "includePlatforms": [],
+    "includePlatforms": [
+        "Editor"
+    ],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": true,

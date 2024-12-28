@@ -1,11 +1,11 @@
 {
     "package": {
-        "name":"unity-package-template",
-        "displayName": "Unity Package Template",
-        "version": "0.0.0",
+        "name":"dependencies",
+        "displayName": "Dependencies",
+        "version": "0.1.0",
         "unityVersion": "",
-        "description": "A template for creating Unity packages.",
-        "url": "https://github.com/frenchtr/unity-package-template"
+        "description": "A dependency injection framework for Unity, hand-crafted with love.",
+        "url": "https://github.com/frenchtr/dependencies"
     },
 
     "organization": {

@@ -1,2 +1,2 @@
-# Unity Package Template
-A template for creating Unity packages.
+# Dependencies
+A dependency injection framework for Unity, hand-crafted with love.
