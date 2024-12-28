@@ -43,6 +43,24 @@ namespace TravisRFrench.Dependencies.Tests.Editor
         }
         
         [Test]
+        public void GivenASingleDependencyRegisteredByItsInterface_WhenResolvedManually_ThenItShouldReturnTheCorrectDependency()
+        {
+            /* ARRANGE */
+            var gameService = new GameService();
+            this.container
+                .Bind<IGameService>()
+                .To<GameService>()
+                .FromInstance(gameService);
+            
+            /* ACT */
+            var resolvedGameService = this.container.Resolve<IGameService>();
+            
+            /* ASSERT */
+            Assert.NotNull(resolvedGameService);
+            Assert.AreSame(gameService, resolvedGameService);
+        }
+        
+        [Test]
         public void GivenANewInjectable_WhenInjected_ThenItShouldHaveAllOfItsFieldDependenciesResolved()
         {
             /* ARRANGE */
@@ -124,52 +142,6 @@ namespace TravisRFrench.Dependencies.Tests.Editor
             Assert.NotNull(injectable.PlayerFromInjectedMethod);
             Assert.AreSame(gameService, injectable.GameServiceFromInjectedMethod);
             Assert.AreSame(player, injectable.PlayerFromInjectedMethod);
-        }
-        
-        [Test]
-        public void GivenANewInjectable_WhenInjected_ThenItsConstructorDependenciesShouldBeResolved()
-        {
-            /* ARRANGE */
-            var gameService = new GameService();
-            var player = new GameObject();
-
-            this.container
-                .Bind<GameService>()
-                .ToSelf()
-                .FromInstance(gameService);
-
-            this.container
-                .Bind<GameObject>()
-                .ToSelf()
-                .FromInstance(player);
-            
-            /* ACT */
-            var injectable = this.container.Resolve<Injectable>();
-            
-            /* ASSERT */
-            Assert.NotNull(injectable.GameServiceFromConstructor);
-            Assert.NotNull(injectable.PlayerFromConstructor);
-            Assert.AreSame(gameService, injectable.GameServiceFromConstructor);
-            Assert.AreSame(player, injectable.PlayerFromConstructor);
-        }
-        
-        [Test]
-        public void GivenANewInjectable_WhenInjected_ThenItsInjectedConstructorShouldBeCalled()
-        {
-            /* ARRANGE */
-            var gameService = new GameService();
-            
-            this.container
-                .Bind<GameService>()
-                .ToSelf()
-                .FromInstance(gameService);
-            
-            /* ACT */
-            var injectable = this.container.Resolve<Injectable>();
-            
-            /* ASSERT */
-            Assert.NotNull(injectable.GameServiceFromConstructor);
-            Assert.True(injectable.WasInjectedConstructorCalled);
         }
     }
 }

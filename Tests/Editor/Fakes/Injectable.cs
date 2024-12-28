@@ -36,5 +36,12 @@ namespace TravisRFrench.Dependencies.Tests.Editor.Fakes
             this.GameServiceFromConstructor = gameServiceFromConstructor;
             this.WasInjectedConstructorCalled = true;
         }
+        
+        [Inject]
+        public void Inject(GameService gameServiceFromInjectedMethod, GameObject playerFromInjectedMethod)
+        {
+            this.GameServiceFromInjectedMethod = gameServiceFromInjectedMethod;
+            this.PlayerFromInjectedMethod = playerFromInjectedMethod;
+        }
     }
 }

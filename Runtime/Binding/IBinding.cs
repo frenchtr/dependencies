@@ -7,5 +7,7 @@ namespace TravisRFrench.Dependencies.Runtime.Binding
         Type InterfaceType { get; }
         Type ImplementationType { get; }
         object Instance { get; }
+        Lifetime Lifetime { get; }
+        SourceType SourceType { get; }
     }
 }
