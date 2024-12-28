@@ -1,4 +1,6 @@
 ﻿using TravisRFrench.Dependencies.Runtime;
+using TravisRFrench.Dependencies.Runtime.Binding;
+using TravisRFrench.Dependencies.Runtime.Contextualization;
 using UnityEngine;
 
 namespace TravisRFrench.Dependencies.Samples
@@ -18,8 +20,15 @@ namespace TravisRFrench.Dependencies.Samples
             var container = this.context.Container;
             var gameService = new GameService();
             
-            container.Register(gameService);
-            container.Register(this.player);
+            container
+                .Bind<GameService>()
+                .ToSelf()
+                .FromInstance(gameService);
+            
+            container
+                .Bind<GameObject>()
+                .ToSelf()
+                .FromInstance(this.player);
 
             var behaviours = this.GetComponents<MonoBehaviour>();
             

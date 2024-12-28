@@ -1,4 +1,4 @@
-﻿namespace TravisRFrench.Dependencies.Runtime
+﻿namespace TravisRFrench.Dependencies.Runtime.Injection
 {
     public interface IInjector
     {

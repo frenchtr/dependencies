@@ -1,6 +1,8 @@
 ﻿using System.Reflection;
+using TravisRFrench.Dependencies.Runtime.Containerization;
+using TravisRFrench.Dependencies.Runtime.Resolution;
 
-namespace TravisRFrench.Dependencies.Runtime
+namespace TravisRFrench.Dependencies.Runtime.Injection
 {
     public class Injector : IInjector
     {

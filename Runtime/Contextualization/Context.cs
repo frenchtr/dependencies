@@ -1,4 +1,6 @@
-﻿namespace TravisRFrench.Dependencies.Runtime
+﻿using TravisRFrench.Dependencies.Runtime.Containerization;
+
+namespace TravisRFrench.Dependencies.Runtime.Contextualization
 {
     public class Context : IContext
     {

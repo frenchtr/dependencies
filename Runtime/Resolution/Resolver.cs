@@ -1,6 +1,7 @@
 ﻿using System;
+using TravisRFrench.Dependencies.Runtime.Registration;
 
-namespace TravisRFrench.Dependencies.Runtime
+namespace TravisRFrench.Dependencies.Runtime.Resolution
 {
     public class Resolver : IResolver
     {
@@ -13,7 +14,9 @@ namespace TravisRFrench.Dependencies.Runtime
         
         public object Resolve(Type type)
         {
-            return this.registry.Get(type);
+            var binding = this.registry.Get(type);
+
+            return binding.Instance;
         }
         
         public T Resolve<T>()

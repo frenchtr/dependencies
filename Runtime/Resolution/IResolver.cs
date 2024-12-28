@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace TravisRFrench.Dependencies.Runtime
+namespace TravisRFrench.Dependencies.Runtime.Resolution
 {
     public interface IResolver
     {

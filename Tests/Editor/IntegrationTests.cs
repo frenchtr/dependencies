@@ -1,5 +1,8 @@
 ﻿using NUnit.Framework;
 using TravisRFrench.Dependencies.Runtime;
+using TravisRFrench.Dependencies.Runtime.Binding;
+using TravisRFrench.Dependencies.Runtime.Containerization;
+using TravisRFrench.Dependencies.Runtime.Contextualization;
 using TravisRFrench.Dependencies.Tests.Editor.Fakes;
 using UnityEngine;
 
@@ -26,7 +29,10 @@ namespace TravisRFrench.Dependencies.Tests.Editor
         {
             /* ARRANGE */
             var gameService = new GameService();
-            this.container.Register<GameService>(gameService);
+            this.container
+                .Bind<GameService>()
+                .ToSelf()
+                .FromInstance(gameService);
             
             /* ACT */
             var resolvedGameService = this.container.Resolve<GameService>();
@@ -44,8 +50,15 @@ namespace TravisRFrench.Dependencies.Tests.Editor
             var player = new GameObject();
             var injectable = new Injectable();
             
-            this.container.Register<GameService>(gameService);
-            this.container.Register<GameObject>(player);
+            this.container
+                .Bind<GameService>()
+                .ToSelf()
+                .FromInstance(gameService);
+
+            this.container
+                .Bind<GameObject>()
+                .ToSelf()
+                .FromInstance(player);
             
             /* ACT */
             this.container.Inject(injectable);
@@ -65,8 +78,15 @@ namespace TravisRFrench.Dependencies.Tests.Editor
             var player = new GameObject();
             var injectable = new Injectable();
             
-            this.container.Register<GameService>(gameService);
-            this.container.Register<GameObject>(player);
+            this.container
+                .Bind<GameService>()
+                .ToSelf()
+                .FromInstance(gameService);
+
+            this.container
+                .Bind<GameObject>()
+                .ToSelf()
+                .FromInstance(player);
             
             /* ACT */
             this.container.Inject(injectable);
@@ -86,8 +106,15 @@ namespace TravisRFrench.Dependencies.Tests.Editor
             var player = new GameObject();
             var injectable = new Injectable();
             
-            this.container.Register<GameService>(gameService);
-            this.container.Register<GameObject>(player);
+            this.container
+                .Bind<GameService>()
+                .ToSelf()
+                .FromInstance(gameService);
+
+            this.container
+                .Bind<GameObject>()
+                .ToSelf()
+                .FromInstance(player);
             
             /* ACT */
             this.container.Inject(injectable);
@@ -105,9 +132,16 @@ namespace TravisRFrench.Dependencies.Tests.Editor
             /* ARRANGE */
             var gameService = new GameService();
             var player = new GameObject();
-            
-            this.container.Register<GameService>(gameService);
-            this.container.Register<GameObject>(player);
+
+            this.container
+                .Bind<GameService>()
+                .ToSelf()
+                .FromInstance(gameService);
+
+            this.container
+                .Bind<GameObject>()
+                .ToSelf()
+                .FromInstance(player);
             
             /* ACT */
             var injectable = this.container.Resolve<Injectable>();
@@ -125,7 +159,10 @@ namespace TravisRFrench.Dependencies.Tests.Editor
             /* ARRANGE */
             var gameService = new GameService();
             
-            this.container.Register<GameService>(gameService);
+            this.container
+                .Bind<GameService>()
+                .ToSelf()
+                .FromInstance(gameService);
             
             /* ACT */
             var injectable = this.container.Resolve<Injectable>();
