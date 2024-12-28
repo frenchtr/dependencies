@@ -42,6 +42,15 @@ namespace TravisRFrench.Dependencies.Runtime.Resolution
                     throw new ResolveException(type, "A binding could not be found for the requested type.");
                 }
                 
+                // Step 2.5: Check for Singleton - if it exists, return the cached instance
+                if (binding.Lifetime == Lifetime.Singleton)
+                {
+                    if (this.singletons.TryGetValue(type, out var singleton))
+                    {
+                        return singleton;
+                    }
+                }
+                
                 // Step 3: Resolve Based on Source Type
                 var resolvedInstance = binding.SourceType switch
                 {
@@ -51,8 +60,11 @@ namespace TravisRFrench.Dependencies.Runtime.Resolution
                     _ => this.ResolveFromNew(binding) // Handles FromType and similar cases
                 };
 
-                // Step 4: Handle Lifetime
-                resolvedInstance = this.ApplyLifetimePolicy(type, binding, resolvedInstance);
+                // Step 4: Cache resolved Singleton
+                if (binding.Lifetime == Lifetime.Singleton)
+                {
+                    this.singletons.TryAdd(type, resolvedInstance);
+                }
                 
                 return resolvedInstance;
             }

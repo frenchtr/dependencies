@@ -32,9 +32,10 @@ namespace TravisRFrench.Dependencies.Samples
                 .FromInstance(this.player);
 
             container
-                .Bind<Rigidbody>()
+                .Bind<SomeComponentDependency>()
                 .ToSelf()
-                .FromFactory(this.MyFactory);
+                .FromFactory(this.MyFactory)
+                .AsSingleton();
 
             var behaviours = this.GetComponents<MonoBehaviour>();
             
@@ -44,10 +45,11 @@ namespace TravisRFrench.Dependencies.Samples
             }
         }
 
-        private Rigidbody MyFactory()
+        private SomeComponentDependency MyFactory()
         {
-            var rb = this.gameObject.AddComponent<Rigidbody>();
-            return rb;
+            var dependency = this.gameObject.AddComponent<SomeComponentDependency>();
+            
+            return dependency;
         }
     }
 }

@@ -12,7 +12,15 @@ namespace TravisRFrench.Dependencies.Samples
         [Inject]
         private GameObject player;
         [Inject]
-        private Rigidbody rigidbody;
+        private SomeComponentDependency dependency1;
+        [Inject]
+        private SomeComponentDependency dependency2;
+        [Inject]
+        private SomeComponentDependency dependency3;
+        [Inject]
+        private SomeComponentDependency dependency4;
+        [Inject]
+        private SomeComponentDependency dependency5;
         
         private void OnEnable()
         {
