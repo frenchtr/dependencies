@@ -1,4 +1,6 @@
 {
     "name": "com.travisrfrench.dependencies",
-    "version": "0.1.0"
+    "version": "0.1.0",
+    "displayName": "Dependencies",
+    "description": "A dependency injection framework for Unity, hand-crafted with love."
 }
