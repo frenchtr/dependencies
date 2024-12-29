@@ -57,17 +57,23 @@ Ensure you have Git installed and configured on your system to fetch the package
   - `Bind<T>()`: Binds a type to an implementation within the context.
   - `Dispose()`: Cleans up the context when no longer needed.
 
-`Dependencies`
-- Purpose: Acts as the global entry point for initializing and accessing the framework.
-- Key Methods:
-  - `Initialize(Container)`: Initializes the framework with the specified container.
-  - `SetContext(Context)`: Sets the active context for dependency resolution.
-
 `Scope`
 
 - Purpose: Manages the lifecycle of scoped dependencies.
 - Key Methods:
   - `Resolve<T>()`: Resolves a dependency within the scope.
+
+`Injector`
+
+- Purpose: Handles dependency injection for objects.
+- Key Methods:
+  - `Inject<T>(T target)`: Injects dependencies into the specified object.
+
+`Dependencies`
+- Purpose: Acts as the global entry point for initializing and accessing the framework.
+- Key Methods:
+  - `Initialize(Container)`: Initializes the framework with the specified container.
+  - `SetContext(Context)`: Sets the active context for dependency resolution.
 
 ### Attributes
 
