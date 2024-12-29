@@ -84,7 +84,7 @@ Ensure you have Git installed and configured on your system to fetch the package
 - Purpose: Thrown when a dependency cannot be resolved.
 
 `ConstructException`
-Purpose: Thrown when an object cannot be constructed.
+- Purpose: Thrown when an object cannot be constructed.
 
 ---
 
