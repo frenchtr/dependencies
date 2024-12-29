@@ -1,4 +1,6 @@
-﻿using TravisRFrench.Dependencies.Runtime.Contextualization;
+﻿using System;
+using TravisRFrench.Dependencies.Runtime.Containerization;
+using TravisRFrench.Dependencies.Runtime.Contextualization;
 using UnityEngine;
 
 namespace TravisRFrench.Dependencies.Runtime
@@ -21,6 +23,15 @@ namespace TravisRFrench.Dependencies.Runtime
         }
         
         public static IContext Context { get; private set; }
+        
+        public static void Initialize()
+        {
+            var context = Settings.RuntimeContext;
+            
+            SetContext(context);
+            Context.Initialize();
+            Context.Setup(context.Container);
+        }
         
         public static void SetContext(IContext context)
         {

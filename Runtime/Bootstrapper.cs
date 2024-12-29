@@ -8,19 +8,8 @@ namespace TravisRFrench.Dependencies.Runtime
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void Bootstrap()
         {
-            var runtimeContext = InitializeRuntimeContext();
-            InjectMonoBehaviours(runtimeContext);
-        }
-
-        public static IContext InitializeRuntimeContext()
-        {
-            var context = Dependencies.Settings.RuntimeContext;
-            Dependencies.SetContext(context);
-            
-            context.Initialize();
-            context.Setup(context.Container);
-
-            return context;
+            Dependencies.Initialize();
+            InjectMonoBehaviours(Dependencies.Context);
         }
         
         private static void InjectMonoBehaviours(IContext context)
