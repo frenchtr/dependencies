@@ -1,6 +1,4 @@
-﻿using System;
-using TravisRFrench.Dependencies.Runtime.Contextualization;
-using TravisRFrench.Dependencies.Runtime.Injection;
+﻿using TravisRFrench.Dependencies.Runtime.Contextualization;
 using UnityEngine;
 
 namespace TravisRFrench.Dependencies.Runtime
@@ -10,29 +8,30 @@ namespace TravisRFrench.Dependencies.Runtime
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void Bootstrap()
         {
-            SetupContexts();
-            Inject();
+            var runtimeContext = InitializeRuntimeContext();
+            InjectMonoBehaviours(runtimeContext);
         }
 
-        private static void SetupContexts()
+        public static IContext InitializeRuntimeContext()
         {
-            var assemblies = AppDomain.CurrentDomain.GetAssemblies();
-            foreach (var assembly in assemblies)
-            {
-                var types = assembly.GetTypes();
-                foreach (var type in types)
-                {
-                    // If the type implements the IContext interface...
-                    if (typeof(IContext).IsAssignableFrom(type) && type.IsClass && !type.IsAbstract)
-                    {
-                    }
-                }
-            }
-        }
-
-        private static void Inject()
-        {
+            var context = Dependencies.Settings.RuntimeContext;
+            Dependencies.SetContext(context);
             
+            context.Initialize();
+            context.Setup(context.Container);
+
+            return context;
+        }
+        
+        private static void InjectMonoBehaviours(IContext context)
+        {
+            var container = context.Container;
+            var monoBehaviours = Resources.FindObjectsOfTypeAll<MonoBehaviour>();
+
+            foreach (var monoBehaviour in monoBehaviours)
+            {
+                container.Inject(monoBehaviour);
+            }
         }
     }
 }

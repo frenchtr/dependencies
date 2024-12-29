@@ -11,16 +11,12 @@ namespace TravisRFrench.Dependencies.Tests.Editor
     [Category(Categories.Integration)]
     public class IntegrationTests
     {
-        private IContext context;
         private IContainer container;
         
         [SetUp]
         public void SetUp()
         {
-            this.context = new TestsContext();
-            this.context.Initialize();
-            
-            this.container = this.context.Container;
+            this.container = new Container();
         }
         
         [Test]

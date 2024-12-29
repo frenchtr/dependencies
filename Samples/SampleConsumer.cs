@@ -11,21 +11,11 @@ namespace TravisRFrench.Dependencies.Samples
         private IGameService gameService;
         [Inject]
         private GameObject player;
-        [Inject]
-        private SomeComponentDependency dependency1;
-        [Inject]
-        private SomeComponentDependency dependency2;
-        [Inject]
-        private SomeComponentDependency dependency3;
-        [Inject]
-        private SomeComponentDependency dependency4;
-        [Inject]
-        private SomeComponentDependency dependency5;
         
         private void OnEnable()
         {
             this.gameService.StartGame();
-            this.player.SetActive(true);
+            this.player.SetActive(false);
         }
     }
 }

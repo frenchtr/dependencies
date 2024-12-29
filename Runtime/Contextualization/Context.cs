@@ -10,13 +10,12 @@ namespace TravisRFrench.Dependencies.Runtime.Contextualization
         {
             this.Container = new Container();
         }
-        
-        public void Initialize()
+
+        public virtual void Initialize()
         {
-            this.Setup(this.Container);
         }
 
-        protected virtual void Setup(IContainer container)
+        public virtual void Setup(IContainer container)
         {
         }
     }

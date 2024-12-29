@@ -1,7 +1,9 @@
 {
     "name": "TravisRFrench.Dependencies.Editor",
     "rootNamespace": "TravisRFrench.Dependencies",
-    "references": [],
+    "references": [
+        "GUID:e69b1fec482354f48bdec01c775fdd16"
+    ],
     "includePlatforms": [
         "Editor"
     ],

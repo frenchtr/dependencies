@@ -3,20 +3,19 @@ using UnityEngine;
 
 namespace TravisRFrench.Dependencies.Runtime.Contextualization
 {
-    [CreateAssetMenu(menuName = "Scriptables/Dependencies/Context")]
-    public class ScriptableContext : ScriptableObject, IContext
+    public abstract class ScriptableContext : ScriptableObject, IContext
     {
-        private Context context;
-
+        private IContext context;
+        
         public IContainer Container => this.context.Container;
 
         public void Initialize()
         {
-            this.context = new();
+            this.context ??= new Context();
             this.context.Initialize();
         }
 
-        protected virtual void Setup(IContainer container)
+        public virtual void Setup(IContainer container)
         {
         }
     }

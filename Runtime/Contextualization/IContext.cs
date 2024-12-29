@@ -7,5 +7,6 @@ namespace TravisRFrench.Dependencies.Runtime.Contextualization
         IContainer Container { get; }
         
         void Initialize();
+        void Setup(IContainer container);
     }
 }
