@@ -1,5 +1,4 @@
-﻿using TravisRFrench.Dependencies.Runtime;
-using TravisRFrench.Dependencies.Runtime.Injection;
+﻿using TravisRFrench.Dependencies.Runtime.Injection;
 using UnityEngine;
 
 namespace TravisRFrench.Dependencies.Tests.Editor.Fakes

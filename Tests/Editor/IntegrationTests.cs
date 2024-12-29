@@ -1,5 +1,4 @@
 ﻿using NUnit.Framework;
-using TravisRFrench.Dependencies.Runtime;
 using TravisRFrench.Dependencies.Runtime.Binding;
 using TravisRFrench.Dependencies.Runtime.Containerization;
 using TravisRFrench.Dependencies.Runtime.Contextualization;
@@ -25,7 +24,7 @@ namespace TravisRFrench.Dependencies.Tests.Editor
         }
         
         [Test]
-        public void GivenASingleDependencyRegisteredByItsType_WhenResolvedManually_ThenItShouldReturnTheCorrectDependency()
+        public void GivenDependencyRegisteredByType_WhenResolved_ThenItReturnsTheRegisteredInstance()
         {
             /* ARRANGE */
             var gameService = new GameService();
@@ -43,7 +42,7 @@ namespace TravisRFrench.Dependencies.Tests.Editor
         }
         
         [Test]
-        public void GivenASingleDependencyRegisteredByItsInterface_WhenResolvedManually_ThenItShouldReturnTheCorrectDependency()
+        public void GivenDependencyRegisteredByInterface_WhenResolved_ThenItReturnsTheRegisteredInstance()
         {
             /* ARRANGE */
             var gameService = new GameService();
@@ -61,7 +60,7 @@ namespace TravisRFrench.Dependencies.Tests.Editor
         }
         
         [Test]
-        public void GivenANewInjectable_WhenInjected_ThenItShouldHaveAllOfItsFieldDependenciesResolved()
+        public void GivenInjectableWithFieldDependencies_WhenInjected_ThenFieldsAreResolved()
         {
             /* ARRANGE */
             var gameService = new GameService();
@@ -89,7 +88,7 @@ namespace TravisRFrench.Dependencies.Tests.Editor
         }
         
         [Test]
-        public void GivenANewInjectable_WhenInjected_ThenItShouldHaveAllOfItsPropertyDependenciesResolved()
+        public void GivenInjectableWithPropertyDependencies_WhenInjected_ThenPropertiesAreResolved()
         {
             /* ARRANGE */
             var gameService = new GameService();
@@ -117,7 +116,7 @@ namespace TravisRFrench.Dependencies.Tests.Editor
         }
         
         [Test]
-        public void GivenANewInjectable_WhenInjected_ThenItShouldHaveAllOfItsMethodDependenciesResolved()
+        public void GivenInjectableWithMethodDependencies_WhenInjected_ThenMethodsAreResolved()
         {
             /* ARRANGE */
             var gameService = new GameService();

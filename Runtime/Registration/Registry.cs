@@ -28,33 +28,37 @@ namespace TravisRFrench.Dependencies.Runtime.Registration
 
         public IBinding Get(Type type)
         {
-            if (!this.TryGet(type, out var binding))
+            if (this.DoTryGet(type, out var binding))
             {
-                throw new BindingNotFoundException(type, $"Unable to locate binding for type {type}.");
+                return binding;
             }
 
-            return binding;
+            throw new BindingNotFoundException(type, $"Unable to locate binding for type {type}.");
         }
 
         public bool TryGet(Type type, out IBinding binding)
         {
-            binding = this.bindings[type];
-            var workingScope = this.scope;
-            
-            while (binding == null && workingScope.Parent != null)
+            return this.DoTryGet(type, out binding);
+        }
+
+        private bool DoTryGet(Type type, out IBinding binding)
+        {
+            // Check the current registry
+            if (this.bindings.TryGetValue(type, out binding))
             {
-                try
-                {
-                    workingScope = workingScope.Parent;
-                    binding = workingScope.Get(type);
-                }
-                catch (BindingNotFoundException exception)
-                {
-                    continue;
-                }
+                return true;
             }
 
-            return binding != null;
+            // Check the parent scope
+            var parent = this.scope.Parent;
+            if (parent != null)
+            {
+                return parent.TryGet(type, out binding);
+            }
+
+            // Not found
+            binding = null;
+            return false;
         }
     }
 }

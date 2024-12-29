@@ -8,5 +8,6 @@ namespace TravisRFrench.Dependencies.Runtime.Registration
         void Register(IBinding binding);
         IBinding Get<T>();
         IBinding Get(Type type);
+        bool TryGet(Type type, out IBinding binding);
     }
 }

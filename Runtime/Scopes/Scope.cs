@@ -42,6 +42,11 @@ namespace TravisRFrench.Dependencies.Runtime.Scopes
             return this.registry.Get(type);
         }
 
+        public bool TryGet(Type type, out IBinding binding)
+        {
+            return this.registry.TryGet(type, out binding);
+        }
+
         public object Resolve(Type type)
         {
             return this.resolver.Resolve(type);
@@ -55,6 +60,10 @@ namespace TravisRFrench.Dependencies.Runtime.Scopes
         public void Inject<T>(T target)
         {
             this.injector.Inject(target);
+        }
+
+        public void Dispose()
+        {
         }
     }
 }

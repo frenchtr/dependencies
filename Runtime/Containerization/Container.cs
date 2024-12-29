@@ -36,6 +36,11 @@ namespace TravisRFrench.Dependencies.Runtime.Containerization
             return this.CurrentScope.Get(type);
         }
 
+        public bool TryGet(Type type, out IBinding binding)
+        {
+            return this.CurrentScope.TryGet(type, out binding);
+        }
+
         public object Resolve(Type type)
         {
             return this.CurrentScope.Resolve(type);

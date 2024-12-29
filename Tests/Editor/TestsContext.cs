@@ -1,5 +1,4 @@
-﻿using TravisRFrench.Dependencies.Runtime;
-using TravisRFrench.Dependencies.Runtime.Containerization;
+﻿using TravisRFrench.Dependencies.Runtime.Containerization;
 using TravisRFrench.Dependencies.Runtime.Contextualization;
 
 namespace TravisRFrench.Dependencies.Tests.Editor
