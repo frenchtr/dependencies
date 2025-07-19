@@ -1,6 +1,17 @@
 {
   "name": "com.travisrfrench.dependencies",
-  "version": "2.0.0",
   "displayName": "Dependencies",
-  "description": "A dependency injection framework for Unity, hand-crafted with love."
+  "version": "2.0.1",
+  "description": "A dependency injection framework for Unity, hand-crafted with love.",
+  "author": {
+    "name": "Travis R. French"
+  },
+  "homepage": "https://github.com/frenchtr/dependencies",
+  "keywords": [
+    "Dependency",
+    "Injection",
+    "DI"
+  ],
+  "dependencies": {},
+  "license": "See <LICENSE.md>"
 }
