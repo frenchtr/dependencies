@@ -1,4 +1,5 @@
 using System;
+using TravisRFrench.Dependencies.Injection;
 
 namespace TravisRFrench.Dependencies.Bindings
 {
@@ -38,5 +39,10 @@ namespace TravisRFrench.Dependencies.Bindings
 		/// A factory function to produce instances, if <see cref="Source"/> is <see cref="ConstructionSource.FromFactory"/>.
 		/// </summary>
 		Func<object> Factory { get; }
+		
+		/// <summary>
+		/// A condition to evaluate against an injection context to determine if the binding is suitable.
+		/// </summary>
+		Func<IInjectionContext, bool> Condition { get; }
 	}
 }

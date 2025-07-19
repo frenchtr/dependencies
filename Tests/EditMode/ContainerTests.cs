@@ -22,11 +22,13 @@ namespace TravisRFrench.Dependencies.Tests
         {
             // ARRANGE
             IContainer container = new Container();
-            var binding = new Binding(typeof(IService), typeof(Service));
-            container.Register(binding);
+            container.Bind<IService>()
+                .To<Service>()
+                .FromNew()
+                .AsTransient();
 
             // ACT
-            var instance = container.Resolve(typeof(IService));
+            var instance = container.Resolve<IService>();
 
             // ASSERT
             Assert.IsNotNull(instance);

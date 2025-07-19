@@ -1,4 +1,5 @@
 using System;
+using TravisRFrench.Dependencies.Injection;
 
 namespace TravisRFrench.Dependencies.Bindings
 {
@@ -28,6 +29,11 @@ namespace TravisRFrench.Dependencies.Bindings
 		/// </summary>
 		/// <seealso cref="ConstructionSource"/>
 		ConstructionSource Source { get; }
+		
+		/// <summary>
+		/// The condition to evaluate.
+		/// </summary>
+		Func<IInjectionContext, bool> Condition { get; }
 
 		/// <summary>
 		/// Sets the implementation type for this binding.
@@ -87,5 +93,12 @@ namespace TravisRFrench.Dependencies.Bindings
 		/// <param name="lifetime">The lifetime to apply.</param>
 		/// <returns>The builder instance.</returns>
 		IBindingBuilder WithLifetime(Lifetime lifetime);
+
+		/// <summary>
+		/// Defines a condition that must be true of any resolved binding.
+		/// </summary>
+		/// <param name="condition">The predicate to evaluate.</param>
+		/// <returns></returns>
+		IBindingBuilder When(Func<IInjectionContext, bool> condition);
 	}
 }

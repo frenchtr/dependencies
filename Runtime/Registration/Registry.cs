@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using TravisRFrench.Dependencies.Bindings;
+using TravisRFrench.Dependencies.Injection;
 
 namespace TravisRFrench.Dependencies.Registration
 {
@@ -37,9 +38,33 @@ namespace TravisRFrench.Dependencies.Registration
 		/// <param name="type">The type to look up in the registry.</param>
 		/// <param name="binding">The resulting binding, if found.</param>
 		/// <returns>True if a binding exists for the type; otherwise, false.</returns>
-		public bool TryGetBinding(Type type, out IBinding binding)
+		public bool TryGetBinding(Type type, out IBinding binding, IInjectionContext context = null)
 		{
-			return this.bindings.TryGetValue(type, out binding);
+			this.bindings.TryGetValue(type, out binding);
+
+			if (binding is null)
+			{
+				return false;
+			}
+
+			if (binding is { Condition: null })
+			{
+				return true;
+			}
+
+			if (binding is { Condition: not null})
+			{
+				try
+				{
+					return binding.Condition.Invoke(context);
+				}
+				catch
+				{
+					return false;
+				}
+			}
+
+			return true;
 		}
 
 		private void ValidateBinding(IBinding binding)

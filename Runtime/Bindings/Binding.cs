@@ -1,4 +1,5 @@
 using System;
+using TravisRFrench.Dependencies.Injection;
 
 namespace TravisRFrench.Dependencies.Bindings
 {
@@ -38,20 +39,28 @@ namespace TravisRFrench.Dependencies.Bindings
 		public Func<object> Factory { get; }
 
 		/// <summary>
+		/// <inheritdoc/>
+		/// </summary>
+		public Func<IInjectionContext, bool> Condition { get; }
+
+		/// <summary>
 		/// Creates a binding that constructs new instances of the implementation type.
 		/// </summary>
 		/// <param name="interfaceType">The interface type being bound.</param>
 		/// <param name="implementationType">The concrete implementation type.</param>
 		/// <param name="lifetime">The desired object lifetime.</param>
+		/// <param name="condition">A condition to evaluate against an injection context to determine if the binding is suitable.</param>
 		public Binding(
 			Type interfaceType, 
 			Type implementationType, 
-			Lifetime lifetime = Lifetime.Transient)
+			Lifetime lifetime = Lifetime.Transient,
+			Func<IInjectionContext, bool> condition = null)
 		{
 			this.InterfaceType = interfaceType;
 			this.ImplementationType = implementationType;
 			this.Lifetime = lifetime;
 			this.Source = ConstructionSource.FromNew;
+			this.Condition = condition;
 		}
 
 		/// <summary>
@@ -61,12 +70,14 @@ namespace TravisRFrench.Dependencies.Bindings
 		/// <param name="implementationType">The concrete implementation type.</param>
 		/// <param name="instance">The instance to use.</param>
 		/// <param name="lifetime">The desired object lifetime.</param>
+		/// <param name="condition">A condition to evaluate against an injection context to determine if the binding is suitable.</param>
 		public Binding(
 			Type interfaceType, 
 			Type implementationType,
 			object instance,
-			Lifetime lifetime = Lifetime.Transient)
-			: this(interfaceType, implementationType, lifetime)
+			Lifetime lifetime = Lifetime.Transient,
+			Func<IInjectionContext, bool> condition = null)
+			: this(interfaceType, implementationType, lifetime, condition)
 		{
 			this.Instance = instance;
 			this.Source = ConstructionSource.FromInstance;
@@ -79,12 +90,14 @@ namespace TravisRFrench.Dependencies.Bindings
 		/// <param name="implementationType">The concrete implementation type.</param>
 		/// <param name="factory">The factory function to generate instances.</param>
 		/// <param name="lifetime">The desired object lifetime.</param>
+		/// <param name="condition">A condition to evaluate against an injection context to determine if the binding is suitable.</param>
 		public Binding(
 			Type interfaceType, 
 			Type implementationType,
 			Func<object> factory,
-			Lifetime lifetime = Lifetime.Transient)
-			: this(interfaceType, implementationType, lifetime)
+			Lifetime lifetime = Lifetime.Transient,
+			Func<IInjectionContext, bool> condition = null)
+			: this(interfaceType, implementationType, lifetime, condition)
 		{
 			this.Factory = factory;
 			this.Source = ConstructionSource.FromFactory;

@@ -49,15 +49,15 @@ namespace TravisRFrench.Dependencies.Containers
 		}
 
 		/// <inheritdoc />
-		bool IRegistry.TryGetBinding(Type type, out IBinding binding)
+		bool IRegistry.TryGetBinding(Type type, out IBinding binding, IInjectionContext context)
 		{
 			return this.registry.TryGetBinding(type, out binding);
 		}
 
 		/// <inheritdoc />
-		object IResolver.Resolve(Type type)
+		object IResolver.Resolve(Type type, IInjectionContext context)
 		{
-			return this.resolver.Resolve(type);
+			return this.resolver.Resolve(type, context);
 		}
 
 		/// <summary>

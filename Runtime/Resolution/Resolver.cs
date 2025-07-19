@@ -3,6 +3,7 @@ using System.Linq;
 using System.Reflection;
 using TravisRFrench.Dependencies.Bindings;
 using TravisRFrench.Dependencies.Containers;
+using TravisRFrench.Dependencies.Injection;
 using TravisRFrench.Dependencies.Registration;
 
 namespace TravisRFrench.Dependencies.Resolution
@@ -35,15 +36,15 @@ namespace TravisRFrench.Dependencies.Resolution
 		/// </summary>
 		/// <typeparam name="TInterface">The type to resolve.</typeparam>
 		/// <returns>An instance of <typeparamref name="TInterface"/>.</returns>
-		public TInterface Resolve<TInterface>()
+		public TInterface Resolve<TInterface>(IInjectionContext context = null)
 		{
-			return (TInterface)this.Resolve(typeof(TInterface));
+			return (TInterface)this.Resolve(typeof(TInterface), context);
 		}
 
 		/// <inheritdoc/>
-		public object Resolve(Type type)
+		public object Resolve(Type type, IInjectionContext context = null)
 		{
-			if (!this.registry.TryGetBinding(type, out var binding))
+			if (!this.registry.TryGetBinding(type, out var binding, context))
 			{
 				if (this.parent == null)
 				{
@@ -52,7 +53,7 @@ namespace TravisRFrench.Dependencies.Resolution
 
 				try
 				{
-					return this.parent.Resolve(type);
+					return this.parent.Resolve(type, context);
 				}
 				catch (Exception e)
 				{

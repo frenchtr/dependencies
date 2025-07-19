@@ -1,5 +1,6 @@
 using System;
 using TravisRFrench.Dependencies.Bindings;
+using TravisRFrench.Dependencies.Injection;
 
 namespace TravisRFrench.Dependencies.Registration
 {
@@ -25,7 +26,8 @@ namespace TravisRFrench.Dependencies.Registration
 		/// </summary>
 		/// <param name="type">The type to query for a binding.</param>
 		/// <param name="binding">The resulting binding, if found.</param>
+		/// <param name="context">Metadata about an injection.</param>
 		/// <returns>True if a binding exists; otherwise, false.</returns>
-		bool TryGetBinding(Type type, out IBinding binding);
+		bool TryGetBinding(Type type, out IBinding binding, IInjectionContext context = null);
 	}
 }

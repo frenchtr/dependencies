@@ -1,5 +1,6 @@
 using System;
 using TravisRFrench.Dependencies.Containers;
+using TravisRFrench.Dependencies.Injection;
 
 namespace TravisRFrench.Dependencies.Bindings
 {
@@ -12,6 +13,7 @@ namespace TravisRFrench.Dependencies.Bindings
 		Type IBindingBuilder.ImplementationType => this.ImplementationType;
 		Lifetime IBindingBuilder.Lifetime => this.Lifetime;
 		ConstructionSource IBindingBuilder.Source => this.Source;
+		Func<IInjectionContext, bool> IBindingBuilder.Condition => this.Condition;
 
 		/// <summary>
 		/// The interface type to bind.
@@ -32,6 +34,11 @@ namespace TravisRFrench.Dependencies.Bindings
 		/// The source of object construction (new, instance, or factory).
 		/// </summary>
 		protected ConstructionSource Source { get; set; }
+		
+		/// <summary>
+		/// <inheritdoc/>
+		/// </summary>
+		public Func<IInjectionContext, bool> Condition { get; set; }
 
 		/// <summary>
 		/// The container to which the final binding will be registered.
@@ -162,6 +169,13 @@ namespace TravisRFrench.Dependencies.Bindings
 			return this.Register();
 		}
 
+		/// <inheritdoc/>
+		public IBindingBuilder When(Func<IInjectionContext, bool> condition)
+		{
+			this.Condition = condition;
+			return this.Register();
+		}
+
 		/// <summary>
 		/// Registers the constructed binding with the container.
 		/// </summary>
@@ -170,9 +184,9 @@ namespace TravisRFrench.Dependencies.Bindings
 		{
 			var binding = this.Source switch
 			{
-				ConstructionSource.FromNew => new Binding(this.InterfaceType, this.ImplementationType, this.Lifetime),
-				ConstructionSource.FromInstance => new Binding(this.InterfaceType, this.ImplementationType, this.instance, this.Lifetime),
-				ConstructionSource.FromFactory => new Binding(this.InterfaceType, this.ImplementationType, this.factory, this.Lifetime),
+				ConstructionSource.FromNew => new Binding(this.InterfaceType, this.ImplementationType, this.Lifetime, this.Condition),
+				ConstructionSource.FromInstance => new Binding(this.InterfaceType, this.ImplementationType, this.instance, this.Lifetime, this.Condition),
+				ConstructionSource.FromFactory => new Binding(this.InterfaceType, this.ImplementationType, this.factory, this.Lifetime, this.Condition),
 				_ => throw new InvalidOperationException($"Unknown construction source for binding {this.InterfaceType.FullName}.")
 			};
 

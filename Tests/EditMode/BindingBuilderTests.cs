@@ -2,6 +2,7 @@ using System;
 using NUnit.Framework;
 using TravisRFrench.Dependencies.Bindings;
 using TravisRFrench.Dependencies.Containers;
+using TravisRFrench.Dependencies.Injection;
 
 namespace TravisRFrench.Dependencies.Tests
 {
@@ -21,12 +22,12 @@ namespace TravisRFrench.Dependencies.Tests
 
             public void Register(IBinding binding) => LatestBinding = binding;
             public void Unregister(Type interfaceType) {}
-            public bool TryGetBinding(Type interfaceType, out IBinding binding)
+            public bool TryGetBinding(Type interfaceType, out IBinding binding, IInjectionContext context = null)
             {
                 binding = null;
                 return false;
             }
-            public object Resolve(Type interfaceType) => throw new NotImplementedException();
+            public object Resolve(Type interfaceType, IInjectionContext context = null) => throw new NotImplementedException();
             public void Inject(object obj) => throw new NotImplementedException();
             public IContainer Parent => this.parent;
             public T Instantiate<T>() => throw new NotImplementedException();
@@ -164,6 +165,77 @@ namespace TravisRFrench.Dependencies.Tests
             var binding = container.LatestBinding;
             Assert.AreEqual(typeof(TestService), binding.InterfaceType);
             Assert.AreEqual(typeof(TestService), binding.ImplementationType);
+        }
+        
+        [Test]
+        public void GivenConditionalFieldBinding_WhenFieldMatches_ThenBindingIsUsed()
+        {
+            // GIVEN
+            var container = new Container();
+            var expected = new Camera();
+
+            container.Bind<Camera>()
+                .ToSelf()
+                .FromInstance(expected)
+                .When(ctx => ctx.MemberName == "mainCamera");
+
+            var obj = new ClassWithMainCameraField();
+
+            // WHEN
+            container.Inject(obj);
+
+            // THEN
+            Assert.That(obj.mainCamera, Is.SameAs(expected));
+        }
+
+        [Test]
+        public void GivenConditionalFieldBinding_WhenFieldDoesNotMatch_ThenBindingIsNotUsed()
+        {
+            // GIVEN
+            var container = new Container();
+            var expected = new Camera();
+
+            container.Bind<Camera>()
+                .ToSelf()
+                .FromInstance(expected)
+                .When(ctx => ctx.MemberName == "mainCamera");
+
+            var obj = new ClassWithOtherCameraField();
+
+            // WHEN / THEN
+            Assert.IsNull(obj.someOtherCamera);
+        }
+
+        [Test]
+        public void GivenConditionalBinding_WhenResolvedManually_ThenBindingIsNotUsed()
+        {
+            // GIVEN
+            var container = new Container();
+            container.Bind<Camera>()
+                .ToSelf()
+                .FromInstance(new Camera())
+                .When(ctx => ctx.MemberName == "mainCamera");
+
+            // WHEN / THEN
+            Assert.Throws<InvalidOperationException>(() => container.Resolve<Camera>());
+        }
+
+        // -------------------------
+        // Support Types for Testing
+        // -------------------------
+
+        public class Camera { }
+
+        public class ClassWithMainCameraField
+        {
+            [Inject]
+            public Camera mainCamera;
+        }
+
+        public class ClassWithOtherCameraField
+        {
+            [Inject]
+            public Camera someOtherCamera;
         }
     }
 }

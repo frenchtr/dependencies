@@ -39,7 +39,17 @@ namespace TravisRFrench.Dependencies.Injection
 
 			foreach (var field in fields)
 			{
-				var value = this.container.Resolve(field.FieldType);
+				var context = new InjectionContext()
+				{
+					MemberName = field.Name,
+					MemberType = field.FieldType,
+					TargetMember = field,
+					TargetField = field,
+					TargetType = type,
+					TargetInstance = obj,
+				};
+				
+				var value = this.container.Resolve(field.FieldType, context);
 				field.SetValue(obj, value);
 			}
 		}
@@ -50,7 +60,17 @@ namespace TravisRFrench.Dependencies.Injection
 
 			foreach (var property in properties)
 			{
-				var value = this.container.Resolve(property.PropertyType);
+				var context = new InjectionContext()
+				{
+					MemberName = property.Name,
+					MemberType = property.PropertyType,
+					TargetMember = property,
+					TargetProperty = property,
+					TargetType = type,
+					TargetInstance = obj,
+				};
+				
+				var value = this.container.Resolve(property.PropertyType, context);
 				property.SetValue(obj, value);
 			}
 		}
@@ -66,8 +86,21 @@ namespace TravisRFrench.Dependencies.Injection
 
 				for (var i = 0; i < parameters.Length; i++)
 				{
-					var parameterType = parameters[i].ParameterType;
-					arguments[i] = this.container.Resolve(parameterType);
+					var parameter = parameters[i];
+					var context = new InjectionContext()
+					{
+						TargetType = type,
+						TargetInstance = obj,
+						MemberName = method.Name,
+						MemberType = method.ReturnType,
+						TargetMember = method,
+						TargetMethod = method,
+						TargetParameter = parameter,
+						ParameterType = parameter.ParameterType,
+					};
+					
+					var parameterType = parameter.ParameterType;
+					arguments[i] = this.container.Resolve(parameterType, context);
 				}
 
 				method.Invoke(obj, arguments);
