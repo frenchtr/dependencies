@@ -2,7 +2,7 @@
     "name": "TravisRFrench.Dependencies.Samples",
     "rootNamespace": "TravisRFrench.Dependencies",
     "references": [
-        "GUID:e69b1fec482354f48bdec01c775fdd16"
+        "TravisRFrench.Dependencies.Runtime"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

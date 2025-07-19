@@ -1,18 +1,24 @@
+# Dependencies Framework
 
-# Dependencies
+## Version 2.0.0
 
-A dependency injection framework for Unity, hand-crafted with love.
+- Complete refactor of the framework.
 
-This framework provides a powerful and flexible Dependency Injection solution tailored for Unity, minimizing developer overhead while maximizing adaptability. Designed with experienced Unity developers in mind, it integrates seamlessly into Unity projects and supports a wide range of use cases.
+---
+
+## Overview
+
+**Dependencies** is a lightweight, modular dependency injection (DI) framework tailored for Unity. It embraces Unity workflows while supporting powerful DI patterns through context-aware binding, scoped lifetimes, and attribute-driven injection.
 
 ---
 
 ## Features
 
-- **Multiple Context Support**: Handle different contexts such as runtime environments and testing scenarios effortlessly.
-- **Scoped Dependency Management**: Easily manage lifetimes and scopes for your dependencies.
-- **Fluent Binding API**: Define and register dependencies with a concise, intuitive syntax.
-- **Attribute-Based Injection**: Automatically resolve dependencies with attributes like `[Inject]` for streamlined workflows.
+- **Multiple Contexts** — Create isolated dependency trees for runtime, testing, or per-scene setups.
+- **Constructor & Attribute Injection** — Supports constructor-based and `[Inject]` attribute-based injection.
+- **Fluent Binding API** — Define bindings in an expressive and chainable style.
+- **Scoped & Singleton Lifetimes** — Easily control when and how often objects are created.
+- **Editor Integration Friendly** — Use `ScriptableInstaller` and `SceneContext` for modular, designer-configurable bindings.
 
 ---
 
@@ -22,83 +28,25 @@ To add this framework to your Unity project:
 
 1. Open your Unity project.
 
-2. Navigate to `Window > Package Manager`.
+2. Go to `Window > Package Manager`.
 
-3. Click the `+` button and select `Add package from git URL...`.
+3. Click the `+` button and choose `Add package from Git URL...`.
 
-4. Enter the following Git URL:
+4. Enter:
 
    ```
-   https://github.com/YourRepo/DependencyInjectionFramework.git
+   https://github.com/frenchtr/dependencies.git
    ```
 
 5. Click `Add`.
 
-Ensure you have Git installed and configured on your system to fetch the package successfully.
+Requires Git to be installed and available in your system path.
 
 ---
 
-## API Reference
+## Quick Start
 
-### Core Classes
-
-`Container`
-
-- Purpose: Acts as the main hub for managing bindings and resolving dependencies.
-
-- Key Methods:
-  - `Register(Func<IBindingBuilder, IBinding>)`: Registers a dependency binding.
-  - `Resolve<T>()`: Resolves and returns an instance of the specified type.
-  - `Inject<T>(T target)`: Injects dependencies into the specified object.`
-  
-`Context`
-- Purpose: Provides a scoped environment for specific dependency bindings.
-- Key Methods:
-  - `Bind<T>()`: Binds a type to an implementation within the context.
-  - `Dispose()`: Cleans up the context when no longer needed.
-
-`Scope`
-
-- Purpose: Manages the lifecycle of scoped dependencies.
-- Key Methods:
-  - `Resolve<T>()`: Resolves a dependency within the scope.
-
-`Injector`
-
-- Purpose: Handles dependency injection for objects.
-- Key Methods:
-  - `Inject<T>(T target)`: Injects dependencies into the specified object.
-
-`Dependencies`
-- Purpose: Acts as the global entry point for initializing and accessing the framework.
-- Key Methods:
-  - `Initialize(Container)`: Initializes the framework with the specified container.
-  - `SetContext(Context)`: Sets the active context for dependency resolution.
-
-### Attributes
-
-`[Inject]`
-
-- Purpose: Marks fields or properties to be injected with dependencies.
-
-### Exceptions
-
-`DependencyException`
-- Purpose: Base class for all exceptions related to dependency injection.
-
-`ResolveException`
-- Purpose: Thrown when a dependency cannot be resolved.
-
-`ConstructException`
-- Purpose: Thrown when an object cannot be constructed.
-
----
-
-## Quick Start Guide
-
-Here’s a basic example to help you get started:
-
-### 1. Define Your Dependencies
+### Define a Service
 
 ```csharp
 public interface ILogger
@@ -115,230 +63,156 @@ public class DebugLogger : ILogger
 }
 ```
 
-### 2. Configure Bindings
-
-Create a script to set up bindings for your dependencies:
+### Bind the Service
 
 ```csharp
-public class GameBindings : MonoBehaviour
+public class GameInstaller : MonoInstaller
 {
-    private void Awake()
+    public override void InstallBindings(IContainer container)
     {
-        var container = new Container();
-
-        container.Register(builder => builder
-            .Bind<ILogger>()
-            .To<DebugLogger>()
-            .AsSingleton());
-
-        Dependencies.Initialize(container);
+        container.Bind<ILogger>()
+                 .To<DebugLogger>()
+                 .AsSingleton();
     }
 }
 ```
 
-### 3. Inject Dependencies
-
-Use the `[Inject]` attribute to resolve dependencies automatically:
+### Inject the Service
 
 ```csharp
-public class SampleConsumer : MonoBehaviour
+public class Player : MonoBehaviour
 {
-    [Inject]
-    private ILogger logger;
+    [Inject] private ILogger logger;
 
     private void Start()
     {
-        logger.Log("Dependency Injection is working!");
+        logger.Log("Player initialized.");
     }
 }
 ```
+
+---
+
+## API Summary
+
+### Core Types
+
+- `Container` — Central DI entry point. Inherits from `IRegistry`, `IResolver`, and `IInjector`.
+- `SceneContext` — Unity MonoBehaviour that initializes a scoped container and injects all scene objects.
+- `GlobalContext` — A ScriptableObject that initializes the global container via `RuntimeInitializeOnLoad`.
+- `MonoInstaller` / `ScriptableInstaller` — Installers that register bindings to a container.
+- `DI` — Static helper for global injection and resolving.
+
+### Key Interfaces
+
+- `IContainer` — Combines registry, resolver, and injector APIs.
+- `IBindingBuilder` — Fluent binding API (generic and dynamic).
+- `IInjector` — Injects fields, properties, and methods marked with `[Inject]`.
+- `IResolver` — Resolves types via constructor or factory.
+- `IRegistry` — Registers and looks up bindings.
+
+### Attributes
+
+- `[Inject]` — Marks fields, properties, or methods to be populated via injection.
 
 ---
 
 ## Usage Examples
 
-### Basic Example: Simple Dependency Injection
+### 🟢 Basic Injection
 
 ```csharp
-public interface IMessageService
+public class HealthSystem : MonoBehaviour
 {
-    void SendMessage(string message);
-}
-
-public class MessageService : IMessageService
-{
-    public void SendMessage(string message)
-    {
-        Debug.Log($"Message sent: {message}");
-    }
-}
-
-public class BasicExample : MonoBehaviour
-{
-    [Inject]
-    private IMessageService messageService;
+    [Inject] private IHealthService healthService;
 
     private void Start()
     {
-        messageService.SendMessage("Hello, World!");
+        int health = healthService.GetHealth();
+        Debug.Log($"Health: {health}");
     }
 }
 
-public class BasicBindings : MonoBehaviour
+public interface IHealthService
 {
-    private void Awake()
-    {
-        var container = new Container();
+    int GetHealth();
+}
 
-        container.Register(builder => builder
-            .Bind<IMessageService>()
-            .To<MessageService>()
-            .AsSingleton());
-    }
+public class DefaultHealthService : IHealthService
+{
+    public int GetHealth() => 100;
 }
 ```
 
-### Intermediate Example: Constructor Injection
+### 🟠 Constructor Injection
 
 ```csharp
-public interface IEmailService
+public class EnemyAI
 {
-    void SendEmail(string recipient, string subject);
-}
+    private readonly IThreatService threatService;
 
-public class EmailService : IEmailService
-{
-    public void SendEmail(string recipient, string subject)
+    public EnemyAI(IThreatService threatService)
     {
-        Debug.Log($"Email sent to {recipient} with subject: {subject}");
-    }
-}
-
-public class NotificationService
-{
-    private readonly IEmailService emailService;
-
-    public NotificationService(IEmailService emailService)
-    {
-        this.emailService = emailService;
+        this.threatService = threatService;
     }
 
-    public void Notify(string recipient, string subject)
+    public void Act(IEnumerable<GameObject> targets)
     {
-        emailService.SendEmail(recipient, subject);
-    }
-}
-
-public class IntermediateBindings : MonoBehaviour
-{
-    private void Awake()
-    {
-        var container = new Container();
-
-        container.Register(builder => builder
-            .Bind<IEmailService>()
-            .To<EmailService>()
-            .AsSingleton());
-
-        container.Register(builder => builder
-            .Bind<NotificationService>()
-            .ToSelf()
-            .AsTransient());
-
-        Dependencies.Initialize(container);
+        var target = threatService.GetHighestThreatTarget(targets);
+        Debug.Log($"Attacking: {target.name}");
     }
 }
 ```
 
-### Advanced Example: Scoped Dependencies and Multiple Contexts
+### 🔵 Scene Setup
 
-```csharp
-public class GameContext : MonoBehaviour
-{
-    private void Awake()
-    {
-        var runtimeContext = new Context();
-
-        runtimeContext.Bind<ILogger>().To<DebugLogger>().AsSingleton();
-        Dependencies.SetContext(runtimeContext);
-    }
-}
-
-public class PlayerService
-{
-    private readonly ILogger logger;
-
-    [Inject]
-    public PlayerService(ILogger logger)
-    {
-        this.logger = logger;
-    }
-
-    public void LogPlayerAction(string action)
-    {
-        logger.Log($"Player action: {action}");
-    }
-}
-
-public class AdvancedExample : MonoBehaviour
-{
-    private void Start()
-    {
-        using (var scope = Dependencies.CreateScope())
-        {
-            var playerService = scope.Resolve<PlayerService>();
-            playerService.LogPlayerAction("Jump");
-        }
-    }
-}
-```
+- Add a `SceneContext` to your Unity scene.
+- Reference MonoInstallers or ScriptableInstallers in its serialized fields.
+- All MonoBehaviours and ScriptableObjects in the scene will be injected at load time.
 
 ---
 
 ## Advanced Features
 
-### Multiple Contexts
-
-Easily switch between contexts, such as runtime and testing:
+### Scoped Injection
 
 ```csharp
-var context = new Context();
-context.Bind<ILogger>().To<TestLogger>().AsTransient();
-Dependencies.SetContext(context);
+var container = new Container();
+var child = new Container(parent: container);
+
+child.Bind<ILogger>().To<DebugLogger>().AsSingleton();
 ```
 
-### Scoped Dependencies
-
-Manage object lifetimes effectively by defining scopes:
+### Runtime Factory Binding
 
 ```csharp
-using (var scope = Dependencies.CreateScope())
-{
-    var logger = scope.Resolve<ILogger>();
-    logger.Log("Scoped Dependency");
-}
+container.Bind<IPlayerService>()
+         .FromFactory(() => new PlayerService("Hero"))
+         .AsSingleton();
 ```
 
----
+### Switching Installers with Contexts
 
-## Versioning
-
-This framework follows [Semantic Versioning (SemVer)](https://semver.org/). Updates will be released as needed.
-
----
-
-## Support
-
-For issues or feature requests, please create a ticket on the [GitHub issues page](https://github.com/YourRepo/DependencyInjectionFramework/issues).
-
----
-
-## Contributing
-
-Contributions are welcome! Fork the repository, make changes, and submit a pull request for review.
+```csharp
+var testContainer = new Container();
+testContainer.Bind<ILogger>().To<TestLogger>().AsTransient();
+```
 
 ---
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+MIT License. See [LICENSE](LICENSE) for full text.
+
+---
+
+## Contributing
+
+Pull requests and suggestions welcome! Please open an issue or PR on GitHub.
+
+---
+
+## Support
+
+File issues on GitHub: [GitHub Issues](https://github.com/frenchtr/dependencies/issues)
+

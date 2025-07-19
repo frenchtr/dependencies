@@ -1,107 +1,119 @@
-﻿using System;
-using System.Collections.Generic;
-using TravisRFrench.Dependencies.Runtime.Binding;
-using TravisRFrench.Dependencies.Runtime.Construction;
-using TravisRFrench.Dependencies.Runtime.Scopes;
+using System;
+using System.Linq;
+using System.Reflection;
+using TravisRFrench.Dependencies.Bindings;
+using TravisRFrench.Dependencies.Containers;
+using TravisRFrench.Dependencies.Registration;
 
-namespace TravisRFrench.Dependencies.Runtime.Resolution
+namespace TravisRFrench.Dependencies.Resolution
 {
-    public class Resolver : IResolver
-    {
-        private readonly IScope scope;
-        private readonly Stack<Type> resolveStack;
-        private readonly Dictionary<Type, object> singletons;
-        private readonly IConstructor constructor;
-        
-        public Resolver(IScope scope, Stack<Type> resolveStack)
-        {
-            this.scope = scope;
-            this.resolveStack = resolveStack;
-            this.singletons = new();
-            this.constructor = new Constructor(scope, this);
-        }
-        
-        public object Resolve(Type type)
-        {
-            try
-            {
-                // Step 1: Circular Dependency Check
-                if (this.resolveStack.Contains(type))
-                {
-                    // We push the type anyway so that the finally block pops the correct type
-                    this.resolveStack.Push(type);
-                    throw new ResolveException(type, "A circular dependency was detected.");
-                }
-                
-                this.resolveStack.Push(type);
+	/// <summary>
+	/// Default implementation of <see cref="IResolver"/> that resolves instances using registered bindings,
+	/// supporting singleton caching and fallback to a parent container.
+	/// </summary>
+	public class Resolver : IResolver
+	{
+		private readonly IRegistry registry;
+		private readonly ICache singletons;
+		private readonly IContainer parent;
 
-                // Step 2: Retrieve Binding
-                var binding = this.scope.Get(type);
-                if (binding == null)
-                {
-                    throw new ResolveException(type, "A binding could not be found for the requested type.");
-                }
-                
-                // Step 2.5: Check for Singleton - if it exists, return the cached instance
-                if (binding.Lifetime == Lifetime.Singleton)
-                {
-                    if (this.singletons.TryGetValue(type, out var singleton))
-                    {
-                        return singleton;
-                    }
-                }
-                
-                // Step 3: Resolve Based on Source Type
-                var resolvedInstance = binding.SourceType switch
-                {
-                    SourceType.FromInstance => binding.Instance,
-                    SourceType.FromNew => this.ResolveFromNew(binding),
-                    SourceType.FromFactory => this.ResolveFromFactory(binding),
-                    _ => this.ResolveFromNew(binding) // Handles FromType and similar cases
-                };
+		/// <summary>
+		/// Constructs a new <see cref="Resolver"/>.
+		/// </summary>
+		/// <param name="registry">The registry from which to retrieve bindings.</param>
+		/// <param name="singletons">The singleton cache to use for storing resolved instances.</param>
+		/// <param name="parent">An optional parent container to use as fallback if no binding is found locally.</param>
+		public Resolver(IRegistry registry, ICache singletons, IContainer parent = null)
+		{
+			this.registry = registry;
+			this.singletons = singletons;
+			this.parent = parent;
+		}
 
-                // Step 4: Cache resolved Singleton
-                if (binding.Lifetime == Lifetime.Singleton)
-                {
-                    this.singletons.TryAdd(type, resolvedInstance);
-                }
-                
-                return resolvedInstance;
-            }
-            catch (Exception exception)
-            {
-                throw new ResolveException(type, $"Failed to resolve type {type}. {exception.Message}".TrimEnd(), exception);
-            }
-            finally
-            {
-                this.resolveStack.Pop();
-            }
-        }
+		/// <summary>
+		/// Resolves an instance of the specified generic type.
+		/// </summary>
+		/// <typeparam name="TInterface">The type to resolve.</typeparam>
+		/// <returns>An instance of <typeparamref name="TInterface"/>.</returns>
+		public TInterface Resolve<TInterface>()
+		{
+			return (TInterface)this.Resolve(typeof(TInterface));
+		}
 
-        private object ResolveFromFactory(IBinding binding)
-        {
-            return binding.Factory.Invoke();
-        }
+		/// <inheritdoc/>
+		public object Resolve(Type type)
+		{
+			if (!this.registry.TryGetBinding(type, out var binding))
+			{
+				if (this.parent == null)
+				{
+					throw new InvalidOperationException($"No binding registered for type {type.Name}");
+				}
 
-        private object ResolveFromNew(IBinding binding)
-        {
-            return this.constructor.Construct(binding.ImplementationType);
-        }
+				try
+				{
+					return this.parent.Resolve(type);
+				}
+				catch (Exception e)
+				{
+					throw new InvalidOperationException(
+						$"No binding registered for type {type.Name} in this container or its parent.", e);
+				}
+			}
 
-        private object ApplyLifetimePolicy(Type type, IBinding binding, object instance)
-        {
-            if (binding.Lifetime == Lifetime.Singleton)
-            {
-                this.singletons.TryAdd(type, instance);
-                return this.singletons[type];
-            }
+			if (binding.Lifetime == Lifetime.Singleton)
+			{
+				if (!this.singletons.TryGet(type, out var instance))
+				{
+					instance = this.CreateInstance(binding);
+					this.singletons.Store(type, instance);
+				}
 
-            return instance;
-        }
-        
-        public T Resolve<T>()
-        {
-            return (T)this.Resolve(typeof(T));
-        }
-    }
+				return instance;
+			}
+
+			return this.CreateInstance(binding);
+		}
+
+		private object CreateInstance(IBinding binding)
+		{
+			return binding.Source switch
+			{
+				ConstructionSource.FromNew => this.CreateInstanceFromNew(binding.ImplementationType),
+				ConstructionSource.FromInstance => binding.Instance,
+				ConstructionSource.FromFactory => binding.Factory.Invoke(),
+				_ => throw new ArgumentOutOfRangeException()
+			};
+		}
+
+		private object CreateInstanceFromNew(Type implementationType)
+		{
+			var constructors = implementationType.GetConstructors(BindingFlags.Public | BindingFlags.Instance)
+				.OrderBy(c => c.GetParameters().Length);
+
+			foreach (var constructor in constructors)
+			{
+				var parameters = constructor.GetParameters();
+				var arguments = new object[parameters.Length];
+
+				try
+				{
+					for (var index = 0; index < parameters.Length; index++)
+					{
+						var parameter = parameters[index];
+						var argument = this.Resolve(parameter.ParameterType);
+						arguments[index] = argument;
+					}
+
+					return constructor.Invoke(arguments);
+				}
+				catch
+				{
+					continue;
+				}
+			}
+
+			throw new InvalidOperationException($"No suitable constructor found for type {implementationType.Name}");
+		}
+	}
 }

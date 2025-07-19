@@ -1,9 +1,13 @@
-﻿using System;
+using System;
 
-namespace TravisRFrench.Dependencies.Runtime.Injection
+namespace TravisRFrench.Dependencies.Injection
 {
-    [AttributeUsage(AttributeTargets.Constructor| AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Method)]
-    public class InjectAttribute : Attribute
-    {
-    }
+	/// <summary>
+	/// Marks a field, property, or method to be injected by the DI container.
+	/// Used by <see cref="IInjector"/> and utility methods like <see cref="DI.Inject"/>.
+	/// </summary>
+	[AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Method)]
+	public class InjectAttribute : Attribute
+	{
+	}
 }

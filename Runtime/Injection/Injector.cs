@@ -1,101 +1,98 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Reflection;
-using TravisRFrench.Dependencies.Runtime.Resolution;
+using TravisRFrench.Dependencies.Containers;
 
-namespace TravisRFrench.Dependencies.Runtime.Injection
+namespace TravisRFrench.Dependencies.Injection
 {
-    public class Injector : IInjector
-    {
-        private readonly IResolver resolver;
+	/// <summary>
+	/// Default implementation of <see cref="IInjector"/> that performs reflection-based injection
+	/// into fields, properties, and methods marked with <see cref="InjectAttribute"/>.
+	/// </summary>
+	public class Injector : IInjector
+	{
+		private readonly IContainer container;
 
-        public Injector(IResolver resolver)
-        {
-            this.resolver = resolver;
-        }
+		private const BindingFlags Flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
 
-        public void Inject<T>(T target)
-        {
-            try
-            {
-                const BindingFlags flags =
-                    BindingFlags.Instance |
-                    BindingFlags.Static |
-                    BindingFlags.Public |
-                    BindingFlags.NonPublic;
+		/// <summary>
+		/// Creates a new injector using the given container for resolution.
+		/// </summary>
+		/// <param name="container">The container to resolve dependencies from.</param>
+		public Injector(IContainer container)
+		{
+			this.container = container;
+		}
 
-                var type = target.GetType();
-            
-                this.InjectFields(type, target, flags);
-                this.InjectProperties(type, target, flags);
-                this.InjectMethods(type, target, flags);
-            }
-            catch (Exception exception)
-            {
-                throw new InjectException(target, $"Failed to inject dependencies into object of type {typeof(T)}. {exception.Message}".TrimEnd(), exception);
-            }
-        }
+		/// <inheritdoc/>
+		public void Inject(object obj)
+		{
+			var type = obj.GetType();
+			this.InjectFields(obj, type);
+			this.InjectProperties(obj, type);
+			this.InjectMethods(obj, type);
+		}
 
-        private void InjectFields(Type type, object obj, BindingFlags flags)
-        {
-            var fields = type.GetFields(flags);
-            foreach (var field in fields)
-            {
-                try
-                {
-                    if (field.GetCustomAttribute<InjectAttribute>() != null)
-                    {
-                        var value = this.resolver.Resolve(field.FieldType);
-                        field.SetValue(obj, value);
-                    }
-                }
-                catch (Exception exception)
-                {
-                    throw new InjectException(obj, $"Failed to inject field {field.Name}. {exception.Message}".TrimEnd(), exception);
-                }
-            }
-        }
-        
-        private void InjectProperties(Type type, object obj, BindingFlags flags)
-        {
-            var properties = type.GetProperties(flags);
-            foreach (var property in properties)
-            {
-                try
-                {
-                    if (property.GetCustomAttribute<InjectAttribute>() != null && property.CanWrite)
-                    {
-                        var value = this.resolver.Resolve(property.PropertyType);
-                        property.SetValue(obj, value);
-                    }
-                }
-                catch (Exception exception)
-                {
-                    throw new InjectException(obj, $"Failed to inject property {property.Name}. {exception.Message}".TrimEnd(), exception);
-                }
-            }
-        }
-        
-        private void InjectMethods(Type type, object obj, BindingFlags flags)
-        {
-            var methods = type.GetMethods(flags);
-            foreach (var method in methods)
-            {
-                try
-                {
-                    if (method.GetCustomAttribute<InjectAttribute>() != null)
-                    {
-                        var parameters = method.GetParameters()
-                            .Select(param => this.resolver.Resolve(param.ParameterType))
-                            .ToArray();
-                        method.Invoke(obj, parameters);
-                    }
-                }
-                catch (Exception exception)
-                {
-                    throw new InjectException(obj, $"Failed to inject method {method.Name}. {exception.Message}".TrimEnd(), exception);
-                }
-            }
-        }
-    }
+		private void InjectFields(object obj, Type type)
+		{
+			var fields = this.GetInjectableFields(type);
+
+			foreach (var field in fields)
+			{
+				var value = this.container.Resolve(field.FieldType);
+				field.SetValue(obj, value);
+			}
+		}
+
+		private void InjectProperties(object obj, Type type)
+		{
+			var properties = this.GetInjectableProperties(type);
+
+			foreach (var property in properties)
+			{
+				var value = this.container.Resolve(property.PropertyType);
+				property.SetValue(obj, value);
+			}
+		}
+
+		private void InjectMethods(object obj, Type type)
+		{
+			var methods = this.GetInjectableMethods(type);
+
+			foreach (var method in methods)
+			{
+				var parameters = method.GetParameters();
+				var arguments = new object[parameters.Length];
+
+				for (var i = 0; i < parameters.Length; i++)
+				{
+					var parameterType = parameters[i].ParameterType;
+					arguments[i] = this.container.Resolve(parameterType);
+				}
+
+				method.Invoke(obj, arguments);
+			}
+		}
+
+		private FieldInfo[] GetInjectableFields(Type type)
+		{
+			return type.GetFields(Flags)
+				.Where(f => f.IsDefined(typeof(InjectAttribute)))
+				.ToArray();
+		}
+
+		private PropertyInfo[] GetInjectableProperties(Type type)
+		{
+			return type.GetProperties(Flags)
+				.Where(p => p.IsDefined(typeof(InjectAttribute)))
+				.ToArray();
+		}
+
+		private MethodInfo[] GetInjectableMethods(Type type)
+		{
+			return type.GetMethods(Flags)
+				.Where(m => m.IsDefined(typeof(InjectAttribute)))
+				.ToArray();
+		}
+	}
 }

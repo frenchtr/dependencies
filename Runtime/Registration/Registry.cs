@@ -1,64 +1,82 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using TravisRFrench.Dependencies.Runtime.Binding;
-using TravisRFrench.Dependencies.Runtime.Scopes;
+using TravisRFrench.Dependencies.Bindings;
 
-namespace TravisRFrench.Dependencies.Runtime.Registration
+namespace TravisRFrench.Dependencies.Registration
 {
-    public class Registry : IRegistry
-    {
-        private readonly IScope scope;
-        private readonly Dictionary<Type, IBinding> bindings;
+	/// <summary>
+	/// Default implementation of <see cref="IRegistry"/> that stores interface-to-binding mappings.
+	/// </summary>
+	public class Registry : IRegistry
+	{
+		private readonly Dictionary<Type, IBinding> bindings = new();
 
-        public Registry(IScope scope)
-        {
-            this.scope = scope;
-            this.bindings = new();
-        }
-        
-        public void Register(IBinding binding)
-        {
-            this.bindings[binding.InterfaceType] = binding;
-        }
+		/// <summary>
+		/// Registers a new binding in the registry.
+		/// If a binding for the same interface already exists, it is replaced.
+		/// </summary>
+		/// <param name="binding">The binding to register.</param>
+		public void Register(IBinding binding)
+		{
+			this.ValidateBinding(binding);
+			this.bindings[binding.InterfaceType] = binding;
+		}
 
-        public IBinding Get<T>()
-        {
-            return this.Get(typeof(T));
-        }
+		/// <summary>
+		/// Removes the binding associated with the specified interface type.
+		/// </summary>
+		/// <param name="interfaceType">The interface type to unregister.</param>
+		public void Unregister(Type interfaceType)
+		{
+			this.bindings.Remove(interfaceType);
+		}
 
-        public IBinding Get(Type type)
-        {
-            if (this.DoTryGet(type, out var binding))
-            {
-                return binding;
-            }
+		/// <summary>
+		/// Attempts to retrieve a binding for the given type.
+		/// </summary>
+		/// <param name="type">The type to look up in the registry.</param>
+		/// <param name="binding">The resulting binding, if found.</param>
+		/// <returns>True if a binding exists for the type; otherwise, false.</returns>
+		public bool TryGetBinding(Type type, out IBinding binding)
+		{
+			return this.bindings.TryGetValue(type, out binding);
+		}
 
-            throw new BindingNotFoundException(type, $"Unable to locate binding for type {type}.");
-        }
+		private void ValidateBinding(IBinding binding)
+		{
+			var interfaceType = binding.InterfaceType;
+			var implementationType = binding.ImplementationType;
+			var lifetime = binding.Lifetime;
+			var source = binding.Source;
+			var instance = binding.Instance;
+			var factory = binding.Factory;
 
-        public bool TryGet(Type type, out IBinding binding)
-        {
-            return this.DoTryGet(type, out binding);
-        }
+			if (interfaceType == null)
+			{
+				throw new InvalidOperationException("Binding interface type must not be null.");
+			}
 
-        private bool DoTryGet(Type type, out IBinding binding)
-        {
-            // Check the current registry
-            if (this.bindings.TryGetValue(type, out binding))
-            {
-                return true;
-            }
+			if (implementationType == null)
+			{
+				throw new InvalidOperationException("Binding implementation type must not be null.");
+			}
 
-            // Check the parent scope
-            var parent = this.scope.Parent;
-            if (parent != null)
-            {
-                return parent.TryGet(type, out binding);
-            }
+			if (!interfaceType.IsAssignableFrom(implementationType))
+			{
+				throw new InvalidOperationException($"{implementationType.Name} is not assignable to {interfaceType.Name}");
+			}
 
-            // Not found
-            binding = null;
-            return false;
-        }
-    }
+			if (source == ConstructionSource.FromInstance && instance == null)
+			{
+				throw new InvalidOperationException(
+					$"An instance must be provided when using {ConstructionSource.FromInstance}.");
+			}
+
+			if (source == ConstructionSource.FromFactory && factory == null)
+			{
+				throw new InvalidOperationException(
+					$"A factory must be provided when using {ConstructionSource.FromFactory}.");
+			}
+		}
+	}
 }
