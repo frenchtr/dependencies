@@ -96,6 +96,7 @@ namespace TravisRFrench.Dependencies.Injection
 						TargetMember = method,
 						TargetMethod = method,
 						TargetParameter = parameter,
+						ParameterName = parameter.Name,
 						ParameterType = parameter.ParameterType,
 					};
 					
