@@ -1,7 +1,7 @@
 {
   "name": "com.travisrfrench.dependencies",
   "displayName": "Dependencies",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "description": "A dependency injection framework for Unity, hand-crafted with love.",
   "author": {
     "name": "Travis R. French"

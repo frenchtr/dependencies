@@ -66,28 +66,28 @@ namespace TravisRFrench.Dependencies.Resolution
 			{
 				if (!this.singletons.TryGet(type, out var instance))
 				{
-					instance = this.CreateInstance(binding);
+					instance = this.CreateInstance(binding, context);
 					this.singletons.Store(type, instance);
 				}
 
 				return instance;
 			}
 
-			return this.CreateInstance(binding);
+			return this.CreateInstance(binding, context);
 		}
 
-		private object CreateInstance(IBinding binding)
+		private object CreateInstance(IBinding binding, IInjectionContext context = null)
 		{
 			return binding.Source switch
 			{
-				ConstructionSource.FromNew => this.CreateInstanceFromNew(binding.ImplementationType),
+				ConstructionSource.FromNew => this.CreateInstanceFromNew(binding.ImplementationType, context),
 				ConstructionSource.FromInstance => binding.Instance,
 				ConstructionSource.FromFactory => binding.Factory.Invoke(),
 				_ => throw new ArgumentOutOfRangeException()
 			};
 		}
 
-		private object CreateInstanceFromNew(Type implementationType)
+		private object CreateInstanceFromNew(Type implementationType, IInjectionContext context = null)
 		{
 			var constructors = implementationType.GetConstructors(BindingFlags.Public | BindingFlags.Instance)
 				.OrderBy(c => c.GetParameters().Length);
@@ -102,7 +102,7 @@ namespace TravisRFrench.Dependencies.Resolution
 					for (var index = 0; index < parameters.Length; index++)
 					{
 						var parameter = parameters[index];
-						var argument = this.Resolve(parameter.ParameterType);
+						var argument = this.Resolve(parameter.ParameterType, context);
 						arguments[index] = argument;
 					}
 
