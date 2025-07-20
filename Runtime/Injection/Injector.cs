@@ -27,10 +27,22 @@ namespace TravisRFrench.Dependencies.Injection
 		/// <inheritdoc/>
 		public void Inject(object obj)
 		{
-			var type = obj.GetType();
-			this.InjectFields(obj, type);
-			this.InjectProperties(obj, type);
-			this.InjectMethods(obj, type);
+			if (obj == null)
+			{
+				throw new ArgumentNullException(nameof(obj));
+			}
+			
+			try
+			{
+				var type = obj.GetType();
+				this.InjectFields(obj, type);
+				this.InjectProperties(obj, type);
+				this.InjectMethods(obj, type);
+			}
+			catch (Exception exception)
+			{
+				throw new InjectionException(this, $"Failed to inject object of type '{obj.GetType().Name}'.", exception);
+			}
 		}
 
 		private void InjectFields(object obj, Type type)
@@ -39,18 +51,25 @@ namespace TravisRFrench.Dependencies.Injection
 
 			foreach (var field in fields)
 			{
-				var context = new InjectionContext()
+				try
 				{
-					MemberName = field.Name,
-					MemberType = field.FieldType,
-					TargetMember = field,
-					TargetField = field,
-					TargetType = type,
-					TargetInstance = obj,
-				};
+					var context = new InjectionContext()
+					{
+						MemberName = field.Name,
+						MemberType = field.FieldType,
+						TargetMember = field,
+						TargetField = field,
+						TargetType = type,
+						TargetInstance = obj,
+					};
 				
-				var value = this.container.Resolve(field.FieldType, context);
-				field.SetValue(obj, value);
+					var value = this.container.Resolve(field.FieldType, context);
+					field.SetValue(obj, value);
+				}
+				catch (Exception exception)
+				{
+					throw new FieldInjectionException(this, field, $"Failed to inject field '{field.Name}' of type {field.FieldType}.", exception);
+				}
 			}
 		}
 
@@ -60,18 +79,25 @@ namespace TravisRFrench.Dependencies.Injection
 
 			foreach (var property in properties)
 			{
-				var context = new InjectionContext()
+				try
 				{
-					MemberName = property.Name,
-					MemberType = property.PropertyType,
-					TargetMember = property,
-					TargetProperty = property,
-					TargetType = type,
-					TargetInstance = obj,
-				};
+					var context = new InjectionContext()
+					{
+						MemberName = property.Name,
+						MemberType = property.PropertyType,
+						TargetMember = property,
+						TargetProperty = property,
+						TargetType = type,
+						TargetInstance = obj,
+					};
 				
-				var value = this.container.Resolve(property.PropertyType, context);
-				property.SetValue(obj, value);
+					var value = this.container.Resolve(property.PropertyType, context);
+					property.SetValue(obj, value);
+				}
+				catch (Exception exception)
+				{
+					throw new PropertyInjectionException(this, property, $"Failed to inject property '{property.Name}' of type '{property.PropertyType}'.", exception);
+				}
 			}
 		}
 
@@ -81,30 +107,45 @@ namespace TravisRFrench.Dependencies.Injection
 
 			foreach (var method in methods)
 			{
-				var parameters = method.GetParameters();
-				var arguments = new object[parameters.Length];
-
-				for (var i = 0; i < parameters.Length; i++)
+				try
 				{
-					var parameter = parameters[i];
-					var context = new InjectionContext()
-					{
-						TargetType = type,
-						TargetInstance = obj,
-						MemberName = method.Name,
-						MemberType = method.ReturnType,
-						TargetMember = method,
-						TargetMethod = method,
-						TargetParameter = parameter,
-						ParameterName = parameter.Name,
-						ParameterType = parameter.ParameterType,
-					};
-					
-					var parameterType = parameter.ParameterType;
-					arguments[i] = this.container.Resolve(parameterType, context);
-				}
+					var parameters = method.GetParameters();
+					var arguments = new object[parameters.Length];
 
-				method.Invoke(obj, arguments);
+					for (var i = 0; i < parameters.Length; i++)
+					{
+						var parameter = parameters[i];
+					
+						try
+						{
+							var context = new InjectionContext()
+							{
+								TargetType = type,
+								TargetInstance = obj,
+								MemberName = method.Name,
+								MemberType = method.ReturnType,
+								TargetMember = method,
+								TargetMethod = method,
+								TargetParameter = parameter,
+								ParameterName = parameter.Name,
+								ParameterType = parameter.ParameterType,
+							};
+					
+							var parameterType = parameter.ParameterType;
+							arguments[i] = this.container.Resolve(parameterType, context);
+						}
+						catch (Exception exception)
+						{
+							throw new ParameterInjectionException(this, parameter, $"Failed to inject parameter '{parameter.Name}' of type '{parameter.ParameterType}'.", exception);
+						}
+					}
+
+					method.Invoke(obj, arguments);
+				}
+				catch (Exception exception)
+				{
+					throw new MethodInjectionException(this, method, $"Failed to inject method '{method.Name}'.", exception);
+				}
 			}
 		}
 

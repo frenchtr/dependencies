@@ -1,6 +1,7 @@
 using System;
 using TravisRFrench.Dependencies.Containers;
 using TravisRFrench.Dependencies.Injection;
+using TravisRFrench.Dependencies.Registration;
 
 namespace TravisRFrench.Dependencies.Bindings
 {
@@ -205,27 +206,32 @@ namespace TravisRFrench.Dependencies.Bindings
 
 			if (interfaceType == null)
 			{
-				throw new InvalidOperationException("You must specify an interface type for the binding.");
+				throw new BindingBuilderValidationException(this, binding, 
+					"You must specify an interface type for the binding.");
 			}
 
 			if (implementationType == null)
 			{
-				throw new InvalidOperationException($"You must call {nameof(To)} or {nameof(this.ToSelf)}.");
+				throw new BindingBuilderValidationException(this, binding,
+					$"You must call {nameof(To)} or {nameof(this.ToSelf)}.");
 			}
 
 			if (!interfaceType.IsAssignableFrom(implementationType))
 			{
-				throw new InvalidOperationException($"{implementationType.Name} is not assignable to {interfaceType.Name}");
+				throw new BindingBuilderValidationException(this, binding,
+					$"{implementationType.Name} is not assignable to {interfaceType.Name}");
 			}
 
 			if (source == ConstructionSource.FromInstance && this.instance == null)
 			{
-				throw new InvalidOperationException($"You must provide a non-null instance when calling {nameof(this.FromInstance)}.");
+				throw new BindingBuilderValidationException(this, binding,
+					$"You must provide a non-null instance when calling {nameof(this.FromInstance)}.");
 			}
 
 			if (source == ConstructionSource.FromFactory && this.factory == null)
 			{
-				throw new InvalidOperationException($"You must provide a non-null factory when calling {nameof(this.FromFactory)}.");
+				throw new BindingBuilderValidationException(this, binding,
+					$"You must provide a non-null factory when calling {nameof(this.FromFactory)}.");
 			}
 		}
 	}

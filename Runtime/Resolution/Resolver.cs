@@ -16,6 +16,7 @@ namespace TravisRFrench.Dependencies.Resolution
 	{
 		private readonly IRegistry registry;
 		private readonly ICache singletons;
+		private readonly IInjector injector;
 		private readonly IContainer parent;
 
 		/// <summary>
@@ -24,10 +25,11 @@ namespace TravisRFrench.Dependencies.Resolution
 		/// <param name="registry">The registry from which to retrieve bindings.</param>
 		/// <param name="singletons">The singleton cache to use for storing resolved instances.</param>
 		/// <param name="parent">An optional parent container to use as fallback if no binding is found locally.</param>
-		public Resolver(IRegistry registry, ICache singletons, IContainer parent = null)
+		public Resolver(IRegistry registry, ICache singletons, IInjector injector, IContainer parent = null)
 		{
 			this.registry = registry;
 			this.singletons = singletons;
+			this.injector = injector;
 			this.parent = parent;
 		}
 
@@ -44,77 +46,134 @@ namespace TravisRFrench.Dependencies.Resolution
 		/// <inheritdoc/>
 		public object Resolve(Type type, IInjectionContext context = null)
 		{
-			if (!this.registry.TryGetBinding(type, out var binding, context))
+			if (type == null)
 			{
-				if (this.parent == null)
-				{
-					throw new InvalidOperationException($"No binding registered for type {type.Name}");
-				}
+				throw new ArgumentNullException(nameof(type));
+			}
+			
+			try
+			{
+				IBinding binding;
 
 				try
 				{
-					return this.parent.Resolve(type, context);
-				}
-				catch (Exception e)
-				{
-					throw new InvalidOperationException(
-						$"No binding registered for type {type.Name} in this container or its parent.", e);
-				}
-			}
-
-			if (binding.Lifetime == Lifetime.Singleton)
-			{
-				if (!this.singletons.TryGet(type, out var instance))
-				{
-					instance = this.CreateInstance(binding, context);
-					this.singletons.Store(type, instance);
-				}
-
-				return instance;
-			}
-
-			return this.CreateInstance(binding, context);
-		}
-
-		private object CreateInstance(IBinding binding, IInjectionContext context = null)
-		{
-			return binding.Source switch
-			{
-				ConstructionSource.FromNew => this.CreateInstanceFromNew(binding.ImplementationType, context),
-				ConstructionSource.FromInstance => binding.Instance,
-				ConstructionSource.FromFactory => binding.Factory.Invoke(),
-				_ => throw new ArgumentOutOfRangeException()
-			};
-		}
-
-		private object CreateInstanceFromNew(Type implementationType, IInjectionContext context = null)
-		{
-			var constructors = implementationType.GetConstructors(BindingFlags.Public | BindingFlags.Instance)
-				.OrderBy(c => c.GetParameters().Length);
-
-			foreach (var constructor in constructors)
-			{
-				var parameters = constructor.GetParameters();
-				var arguments = new object[parameters.Length];
-
-				try
-				{
-					for (var index = 0; index < parameters.Length; index++)
+					if (!this.registry.TryGetBinding(type, out binding, context))
 					{
-						var parameter = parameters[index];
-						var argument = this.Resolve(parameter.ParameterType, context);
-						arguments[index] = argument;
+						var instance = this.parent.Resolve(type, context);
+						return this.InjectInstance(instance);
+					}
+				}
+				catch (Exception exception)
+				{
+					throw new BindingNotFoundException(this, type,
+						"Unable to find a suitable binding in the container or any parent.", exception);
+				}
+
+				if (binding.Lifetime == Lifetime.Singleton)
+				{
+					if (!this.singletons.TryGet(type, out var instance))
+					{
+						instance = this.GetInstance(binding, context);
+						this.singletons.Store(type, instance);
 					}
 
-					return constructor.Invoke(arguments);
+					return instance;
 				}
-				catch
+
+				return this.GetInstance(binding, context);
+			}
+			catch (Exception exception)
+			{
+				var suffix = (type == null) ? string.Empty : $" of type {type.Name}";
+				throw new TypeResolutionException(this, type, $"Unable to resolve binding{suffix}.", exception);
+			}
+		}
+
+		private object InjectInstance(object instance)
+		{
+			this.injector.Inject(instance);
+			return instance;
+		}
+		
+		private object GetInstance(IBinding binding, IInjectionContext context = null)
+		{
+			switch (binding.Source)
+			{
+				case ConstructionSource.FromInstance:
 				{
-					continue;
+					return binding.Instance;
+				}
+				case ConstructionSource.FromNew:
+				{
+					var instance = this.CreateInstanceFromNew(binding, context);
+					var injected  = this.InjectInstance(instance);
+
+					return injected;
+				}
+				case ConstructionSource.FromFactory:
+				{
+					var instance = this.CreateInstanceFromFactory(binding);
+					var injected = this.InjectInstance(instance);
+					
+					return injected;
+				}
+				default:
+				{
+					throw new ArgumentOutOfRangeException();
 				}
 			}
+		}
 
-			throw new InvalidOperationException($"No suitable constructor found for type {implementationType.Name}");
+		private object CreateInstanceFromNew(IBinding binding, IInjectionContext context = null)
+		{
+			try
+			{
+				var constructors = binding.ImplementationType
+					.GetConstructors(BindingFlags.Public | BindingFlags.Instance)
+					.OrderBy(c => c.GetParameters().Length);
+
+				foreach (var constructor in constructors)
+				{
+					var parameters = constructor.GetParameters();
+					var arguments = new object[parameters.Length];
+
+					try
+					{
+						for (var index = 0; index < parameters.Length; index++)
+						{
+							var parameter = parameters[index];
+							var argument = this.Resolve(parameter.ParameterType, context);
+							arguments[index] = argument;
+						}
+
+						return constructor.Invoke(arguments);
+					}
+					catch
+					{
+						continue;
+					}
+				}
+				
+				throw new InvalidOperationException($"No suitable constructor found for type {binding.ImplementationType.Name}");
+			}
+			catch (Exception exception)
+			{
+				throw new ConstructorCreationException(this, binding.ImplementationType, $"Unable to create instance from constructor.", exception);
+			}
+		}
+
+		private object CreateInstanceFromFactory(IBinding binding)
+		{
+			try
+			{
+				var factory = binding.Factory;
+
+				return factory.Invoke();
+			}
+			catch (Exception exception)
+			{
+				throw new FactoryCreationException(this, binding.ImplementationType, $"Unable to create instance from factory.", exception);
+			}
 		}
 	}
 }

@@ -17,12 +17,11 @@ namespace TravisRFrench.Dependencies.Containers
 		/// The parent container used for fallback resolution, or null if this is the root container.
 		/// </summary>
 		IContainer Parent { get; }
-
+		
 		/// <summary>
-		/// Resolves and instantiates a new instance of the specified type.
+		/// Creates a child of this container.
 		/// </summary>
-		/// <typeparam name="T">The type to instantiate and resolve.</typeparam>
-		/// <returns>A fully resolved instance of <typeparamref name="T"/>.</returns>
-		T Instantiate<T>();
+		/// <returns>The child container.</returns>
+		IContainer CreateChildContainer();
 	}
 }

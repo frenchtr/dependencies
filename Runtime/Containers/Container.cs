@@ -32,8 +32,14 @@ namespace TravisRFrench.Dependencies.Containers
 
 			this.singletons = new Cache();
 			this.registry = new Registry();
-			this.resolver = new Resolver(this.registry, this.singletons, this.Parent);
 			this.injector = new Injector(this);
+			this.resolver = new Resolver(this.registry, this.singletons, this.injector, this.Parent);
+		}
+		
+		/// <inheritdoc/>>
+		public IContainer CreateChildContainer()
+		{
+			return new Container(this);
 		}
 
 		/// <inheritdoc />
@@ -67,16 +73,6 @@ namespace TravisRFrench.Dependencies.Containers
 		public void Inject(object obj)
 		{
 			this.injector.Inject(obj);
-		}
-
-		/// <summary>
-		/// Resolves and instantiates a new object of the specified type.
-		/// </summary>
-		/// <typeparam name="T">The type to instantiate and resolve.</typeparam>
-		/// <returns>A fully resolved and constructed instance of <typeparamref name="T"/>.</returns>
-		public T Instantiate<T>()
-		{
-			return (T)this.resolver.Resolve(typeof(T));
 		}
 	}
 }

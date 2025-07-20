@@ -56,10 +56,17 @@ namespace TravisRFrench.Dependencies.Registration
 			{
 				try
 				{
+					if (context == null)
+					{
+						binding = null;
+						return false;
+					}
+					
 					return binding.Condition.Invoke(context);
 				}
 				catch
 				{
+					binding = null;
 					return false;
 				}
 			}
@@ -78,29 +85,27 @@ namespace TravisRFrench.Dependencies.Registration
 
 			if (interfaceType == null)
 			{
-				throw new InvalidOperationException("Binding interface type must not be null.");
+				throw new BindingValidationException(this, binding,"Binding interface type must not be null.");
 			}
 
 			if (implementationType == null)
 			{
-				throw new InvalidOperationException("Binding implementation type must not be null.");
+				throw new BindingValidationException(this, binding, "Binding implementation type must not be null.");
 			}
 
 			if (!interfaceType.IsAssignableFrom(implementationType))
 			{
-				throw new InvalidOperationException($"{implementationType.Name} is not assignable to {interfaceType.Name}");
+				throw new BindingValidationException(this, binding, $"{implementationType.Name} is not assignable to {interfaceType.Name}");
 			}
 
 			if (source == ConstructionSource.FromInstance && instance == null)
 			{
-				throw new InvalidOperationException(
-					$"An instance must be provided when using {ConstructionSource.FromInstance}.");
+				throw new BindingValidationException(this, binding, $"An instance must be provided when using {ConstructionSource.FromInstance}.");
 			}
-
+			
 			if (source == ConstructionSource.FromFactory && factory == null)
 			{
-				throw new InvalidOperationException(
-					$"A factory must be provided when using {ConstructionSource.FromFactory}.");
+				throw new BindingValidationException(this, binding, $"A factory must be provided when using {ConstructionSource.FromFactory}.");
 			}
 		}
 	}
