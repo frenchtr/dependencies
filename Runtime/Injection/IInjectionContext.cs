@@ -5,8 +5,8 @@ namespace TravisRFrench.Dependencies.Injection
 {
 	public interface IInjectionContext
 	{
-		Type TargetType { get; }
-		object TargetInstance { get; }
+		Type InjectedObjectType { get; }
+		object InjectedObjectInstance { get; }
 		string MemberName { get; }
 		Type MemberType { get; }
 		MemberInfo TargetMember { get; }

@@ -1,3 +1,5 @@
+using System;
+
 namespace TravisRFrench.Dependencies.Injection
 {
 	/// <summary>
@@ -10,5 +12,8 @@ namespace TravisRFrench.Dependencies.Injection
 		/// </summary>
 		/// <param name="obj">The object to inject dependencies into.</param>
 		void Inject(object obj);
+
+		object Instantiate(Type type);
+		object InstantiateFromFactory(Func<object> factory);
 	}
 }

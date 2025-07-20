@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Reflection;
 using TravisRFrench.Dependencies.Containers;
+using TravisRFrench.Dependencies.Resolution;
 
 namespace TravisRFrench.Dependencies.Injection
 {
@@ -45,6 +46,86 @@ namespace TravisRFrench.Dependencies.Injection
 			}
 		}
 
+		public object Instantiate(Type type)
+		{
+			if (type == null)
+			{
+				throw new ArgumentNullException(nameof(type));
+			}
+			
+			try
+			{
+				var constructors = type
+					.GetConstructors(BindingFlags.Public | BindingFlags.Instance)
+					.OrderBy(c => c.GetParameters().Length);
+
+				foreach (var constructor in constructors)
+				{
+					var parameters = constructor.GetParameters();
+					var arguments = new object[parameters.Length];
+
+					try
+					{
+						for (var index = 0; index < parameters.Length; index++)
+						{
+							var parameter = parameters[index];
+
+							var context = new InjectionContext()
+							{
+								InjectedObjectType = type,
+								InjectionMode = InjectionMode.Constructor,
+								TargetConstructor = constructor,
+								ParameterType = parameter.ParameterType,
+								ParameterName = parameter.Name,
+							};
+							
+							var argument = this.container.Resolve(parameter.ParameterType, context);
+							arguments[index] = argument;
+						}
+
+						var instance = constructor.Invoke(arguments);
+						this.Inject(instance);
+
+						return instance;
+					}
+					catch
+					{
+						continue;
+					}
+				}
+				
+				throw new InvalidOperationException($"No suitable constructor found for type {type.Name}");
+			}
+			catch (Exception exception)
+			{
+				throw new ConstructorCreationException(type, $"Unable to create instance from constructor.", exception);
+			}
+		}
+
+		public object InstantiateFromFactory(Func<object> factory)
+		{
+			if (factory == null)
+			{
+				throw new ArgumentNullException(nameof(factory));
+			}
+
+			var factoryType = factory.GetType();
+			var type = factoryType.GetGenericArguments()
+				.First();
+			
+			try
+			{
+				var instance = factory.Invoke();
+				this.Inject(instance);
+				
+				return instance;
+			}
+			catch (Exception exception)
+			{
+				throw new FactoryCreationException(type, $"Unable to create instance from factory.", exception);
+			}
+		}
+
 		private void InjectFields(object obj, Type type)
 		{
 			var fields = this.GetInjectableFields(type);
@@ -55,12 +136,13 @@ namespace TravisRFrench.Dependencies.Injection
 				{
 					var context = new InjectionContext()
 					{
+						InjectionMode = InjectionMode.Field,
+						InjectedObjectType = type,
+						InjectedObjectInstance = obj,
 						MemberName = field.Name,
 						MemberType = field.FieldType,
 						TargetMember = field,
 						TargetField = field,
-						TargetType = type,
-						TargetInstance = obj,
 					};
 				
 					var value = this.container.Resolve(field.FieldType, context);
@@ -83,12 +165,13 @@ namespace TravisRFrench.Dependencies.Injection
 				{
 					var context = new InjectionContext()
 					{
+						InjectionMode = InjectionMode.Property,
+						InjectedObjectType = type,
+						InjectedObjectInstance = obj,
 						MemberName = property.Name,
 						MemberType = property.PropertyType,
 						TargetMember = property,
 						TargetProperty = property,
-						TargetType = type,
-						TargetInstance = obj,
 					};
 				
 					var value = this.container.Resolve(property.PropertyType, context);
@@ -120,8 +203,9 @@ namespace TravisRFrench.Dependencies.Injection
 						{
 							var context = new InjectionContext()
 							{
-								TargetType = type,
-								TargetInstance = obj,
+								InjectionMode = InjectionMode.Method,
+								InjectedObjectType = type,
+								InjectedObjectInstance = obj,
 								MemberName = method.Name,
 								MemberType = method.ReturnType,
 								TargetMember = method,

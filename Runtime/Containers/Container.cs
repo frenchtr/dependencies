@@ -74,5 +74,15 @@ namespace TravisRFrench.Dependencies.Containers
 		{
 			this.injector.Inject(obj);
 		}
+
+		public object Instantiate(Type type)
+		{
+			return this.injector.Instantiate(type);
+		}
+
+		public object InstantiateFromFactory(Func<object> factory)
+		{
+			return this.injector.InstantiateFromFactory(factory);
+		}
 	}
 }

@@ -1,7 +1,6 @@
 using System;
 using TravisRFrench.Dependencies.Containers;
 using TravisRFrench.Dependencies.Injection;
-using TravisRFrench.Dependencies.Registration;
 
 namespace TravisRFrench.Dependencies.Bindings
 {

@@ -1,6 +1,4 @@
 using System;
-using System.Linq;
-using System.Reflection;
 using TravisRFrench.Dependencies.Bindings;
 using TravisRFrench.Dependencies.Containers;
 using TravisRFrench.Dependencies.Injection;
@@ -60,7 +58,7 @@ namespace TravisRFrench.Dependencies.Resolution
 					if (!this.registry.TryGetBinding(type, out binding, context))
 					{
 						var instance = this.parent.Resolve(type, context);
-						return this.InjectInstance(instance);
+						return instance;
 					}
 				}
 				catch (Exception exception)
@@ -88,92 +86,16 @@ namespace TravisRFrench.Dependencies.Resolution
 				throw new TypeResolutionException(this, type, $"Unable to resolve binding{suffix}.", exception);
 			}
 		}
-
-		private object InjectInstance(object instance)
-		{
-			this.injector.Inject(instance);
-			return instance;
-		}
 		
 		private object GetInstance(IBinding binding, IInjectionContext context = null)
 		{
-			switch (binding.Source)
+			return binding.Source switch
 			{
-				case ConstructionSource.FromInstance:
-				{
-					return binding.Instance;
-				}
-				case ConstructionSource.FromNew:
-				{
-					var instance = this.CreateInstanceFromNew(binding, context);
-					var injected  = this.InjectInstance(instance);
-
-					return injected;
-				}
-				case ConstructionSource.FromFactory:
-				{
-					var instance = this.CreateInstanceFromFactory(binding);
-					var injected = this.InjectInstance(instance);
-					
-					return injected;
-				}
-				default:
-				{
-					throw new ArgumentOutOfRangeException();
-				}
-			}
-		}
-
-		private object CreateInstanceFromNew(IBinding binding, IInjectionContext context = null)
-		{
-			try
-			{
-				var constructors = binding.ImplementationType
-					.GetConstructors(BindingFlags.Public | BindingFlags.Instance)
-					.OrderBy(c => c.GetParameters().Length);
-
-				foreach (var constructor in constructors)
-				{
-					var parameters = constructor.GetParameters();
-					var arguments = new object[parameters.Length];
-
-					try
-					{
-						for (var index = 0; index < parameters.Length; index++)
-						{
-							var parameter = parameters[index];
-							var argument = this.Resolve(parameter.ParameterType, context);
-							arguments[index] = argument;
-						}
-
-						return constructor.Invoke(arguments);
-					}
-					catch
-					{
-						continue;
-					}
-				}
-				
-				throw new InvalidOperationException($"No suitable constructor found for type {binding.ImplementationType.Name}");
-			}
-			catch (Exception exception)
-			{
-				throw new ConstructorCreationException(this, binding.ImplementationType, $"Unable to create instance from constructor.", exception);
-			}
-		}
-
-		private object CreateInstanceFromFactory(IBinding binding)
-		{
-			try
-			{
-				var factory = binding.Factory;
-
-				return factory.Invoke();
-			}
-			catch (Exception exception)
-			{
-				throw new FactoryCreationException(this, binding.ImplementationType, $"Unable to create instance from factory.", exception);
-			}
+				ConstructionSource.FromInstance => binding.Instance,
+				ConstructionSource.FromNew => this.injector.Instantiate(binding.ImplementationType),
+				ConstructionSource.FromFactory => this.injector.InstantiateFromFactory(binding.Factory),
+				_ => throw new ArgumentOutOfRangeException()
+			};
 		}
 	}
 }
