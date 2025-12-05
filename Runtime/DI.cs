@@ -2,8 +2,9 @@ using System;
 using TravisRFrench.Dependencies.Containers;
 using TravisRFrench.Dependencies.Contexts;
 using TravisRFrench.Dependencies.Injection;
+using UnityEngine;
 
-namespace TravisRFrench.Dependencies.Plugins.dependencies
+namespace TravisRFrench.Dependencies
 {
 	/// <summary>
 	/// Static access point for dependency injection operations using the global context.
@@ -52,5 +53,13 @@ namespace TravisRFrench.Dependencies.Plugins.dependencies
 			container.Inject(target);
 			return true;
 		}
+        
+        public static void Inject(GameObject gameObject, IContainer container = null)
+        {
+			foreach (var monoBehaviour in gameObject.GetComponents<MonoBehaviour>())
+			{
+				Inject(monoBehaviour, container);
+			}
+        }
 	}
 }
