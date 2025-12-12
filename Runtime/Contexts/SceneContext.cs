@@ -37,7 +37,7 @@ namespace TravisRFrench.Dependencies.Contexts
             Instance = this;
 
             var parent = GlobalContext.Container;
-            this.Container = new Container(parent);
+            this.Container = parent.CreateChildContainer();
 
             this.InstallBindings();
             this.InjectSceneObjects();
