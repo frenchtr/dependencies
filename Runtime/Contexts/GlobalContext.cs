@@ -17,6 +17,9 @@ namespace TravisRFrench.Dependencies.Contexts
 		private List<ScriptableInstaller> installers;
 
 		private static IContainer container;
+		
+		/// <inheritdoc/>
+		IContainer IContext.Container => container;
 
 		/// <summary>
 		/// Gets the global container initialized at runtime from the GlobalContext asset.
@@ -24,6 +27,7 @@ namespace TravisRFrench.Dependencies.Contexts
 		public static IContainer Container => container;
 
 		private static bool isInitialized;
+		private static GlobalContext instance;
 
 		/// <summary>
 		/// Initializes the <see cref="GlobalContext"/> and all its installers before the first scene loads.
@@ -36,18 +40,35 @@ namespace TravisRFrench.Dependencies.Contexts
 				return;
 			}
 
-			isInitialized = true;
+			var wasLoaded = LoadGlobalContext();
 
-			var asset = Resources.Load<GlobalContext>("Global Context");
-			if (asset == null)
+			if (!wasLoaded)
 			{
-				Debug.LogWarning("[DI] GlobalContext asset not found in Resources.");
 				return;
 			}
-
+			
 			container = new Container();
+			RunInstallers();
+			
+			isInitialized = true;
+		}
 
-			foreach (var installer in asset.installers)
+		private static bool LoadGlobalContext()
+		{
+			instance = Resources.Load<GlobalContext>("Global Context");
+			
+			if (instance == null)
+			{
+				Debug.LogWarning("[DI] GlobalContext asset not found in Resources.");
+				return false;
+			}
+
+			return true;
+		}
+		
+		private static void RunInstallers()
+		{
+			foreach (var installer in instance.installers)
 			{
 				try
 				{
@@ -60,8 +81,5 @@ namespace TravisRFrench.Dependencies.Contexts
 				}
 			}
 		}
-
-		/// <inheritdoc/>
-		IContainer IContext.Container => container;
 	}
 }
