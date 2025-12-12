@@ -77,6 +77,7 @@ namespace TravisRFrench.Dependencies.Injection
 								TargetConstructor = constructor,
 								ParameterType = parameter.ParameterType,
 								ParameterName = parameter.Name,
+								InjectedName = parameter.Name,
 							};
 							
 							var argument = this.container.Resolve(parameter.ParameterType, context);
@@ -143,6 +144,7 @@ namespace TravisRFrench.Dependencies.Injection
 						MemberType = field.FieldType,
 						TargetMember = field,
 						TargetField = field,
+						InjectedName = field.Name,
 					};
 				
 					var value = this.container.Resolve(field.FieldType, context);
@@ -172,6 +174,7 @@ namespace TravisRFrench.Dependencies.Injection
 						MemberType = property.PropertyType,
 						TargetMember = property,
 						TargetProperty = property,
+						InjectedName = property.Name,
 					};
 				
 					var value = this.container.Resolve(property.PropertyType, context);
@@ -213,6 +216,7 @@ namespace TravisRFrench.Dependencies.Injection
 								TargetParameter = parameter,
 								ParameterName = parameter.Name,
 								ParameterType = parameter.ParameterType,
+								InjectedName = parameter.Name,
 							};
 					
 							var parameterType = parameter.ParameterType;

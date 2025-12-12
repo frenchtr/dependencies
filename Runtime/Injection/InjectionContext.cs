@@ -16,9 +16,8 @@ namespace TravisRFrench.Dependencies.Injection
 		public MethodInfo TargetMethod { get; set; }
 		public ParameterInfo TargetParameter { get; set; }
 		public ConstructorInfo TargetConstructor { get; set; }
-
 		public Type ParameterType { get; set; }
-
 		public string ParameterName { get; set; }
+		public string InjectedName { get; set; }
 	}
 }
