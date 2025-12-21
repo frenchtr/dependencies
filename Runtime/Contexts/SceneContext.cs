@@ -21,6 +21,7 @@ namespace TravisRFrench.Dependencies.Contexts
         [Header("Installers")]
         [SerializeField] private List<MonoInstaller> monoInstallers;
         [SerializeField] private List<ScriptableInstaller> scriptableInstallers;
+        private List<IInstaller> allInstallers;
 
         public string Key => this.key;
         public string ParentKey => this.parentKey;
@@ -28,7 +29,8 @@ namespace TravisRFrench.Dependencies.Contexts
         /// <inheritdoc/>
         public IContainer Container { get; private set; }
 
-        private List<IInstaller> allInstallers;
+        public IList<MonoInstaller> MonoInstallers => this.monoInstallers;
+        public IList<ScriptableInstaller> ScriptableInstallers => this.scriptableInstallers;
 
         private void Awake()
         {

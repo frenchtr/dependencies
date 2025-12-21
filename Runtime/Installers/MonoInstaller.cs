@@ -1,3 +1,4 @@
+using System;
 using TravisRFrench.Dependencies.Containers;
 using TravisRFrench.Dependencies.Contexts;
 using UnityEngine;
@@ -17,5 +18,16 @@ namespace TravisRFrench.Dependencies.Installers
 		/// </summary>
 		/// <param name="container">The container to register bindings with.</param>
 		public abstract void InstallBindings(IContainer container);
+
+		protected virtual void Reset()
+		{
+			if (this.TryGetComponent(out IContext context))
+			{
+				if (context is SceneContext sceneContext)
+				{
+					sceneContext.MonoInstallers.Add(this);
+				}
+			}
+		}
 	}
 }

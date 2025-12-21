@@ -410,10 +410,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2267f14856e349f68db918692f81d9c8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  monoInstallers: []
-  scriptableInstallers: []
   key: Level1
   parentKey: Gameplay
+  monoInstallers: []
+  scriptableInstallers: []
 --- !u!4 &956918362
 Transform:
   m_ObjectHideFlags: 0
