@@ -18,6 +18,7 @@ namespace TravisRFrench.Dependencies.Contexts
         [Header("Keys")]
         [SerializeField] private string key;
         [SerializeField] private string parentKey;
+
         [Header("Installers")]
         [SerializeField] private List<MonoInstaller> monoInstallers;
         [SerializeField] private List<ScriptableInstaller> scriptableInstallers;
@@ -42,6 +43,15 @@ namespace TravisRFrench.Dependencies.Contexts
             this.allInstallers = new List<IInstaller>();
             if (this.monoInstallers != null) this.allInstallers.AddRange(this.monoInstallers);
             if (this.scriptableInstallers != null) this.allInstallers.AddRange(this.scriptableInstallers);
+        }
+
+        private void OnDestroy()
+        {
+            // Optional but recommended; avoids stale registry entries on scene unload.
+            if (!string.IsNullOrWhiteSpace(this.key))
+            {
+                GlobalContext.ContextRegistry.Unregister(this.key);
+            }
         }
 
         /// <summary>
@@ -92,6 +102,13 @@ namespace TravisRFrench.Dependencies.Contexts
                 }
 
                 if (monoBehaviour.gameObject.scene != sceneContextScene)
+                {
+                    continue;
+                }
+
+                // IMPORTANT: GameObjectContexts own injection for their subtrees.
+                // This ensures GO-level resolution happens first for those objects.
+                if (monoBehaviour.GetComponentInParent<GameObjectContext>(true) != null)
                 {
                     continue;
                 }

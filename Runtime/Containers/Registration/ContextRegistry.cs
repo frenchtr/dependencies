@@ -32,7 +32,7 @@ namespace TravisRFrench.Dependencies.Containers.Registration
 			this.contexts.Add(key, container);
 		}
 
-		public void Deregister(string key)
+		public void Unregister(string key)
 		{
 			if (!this.contexts.ContainsKey(key))
 			{

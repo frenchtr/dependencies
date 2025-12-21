@@ -11,6 +11,8 @@ namespace TravisRFrench.Dependencies
     /// <summary>
     /// Bootstraps SceneContexts deterministically after scene load.
     /// Supports deferred initialization when parent contexts load later (additive or staged loads).
+    ///
+    /// Also bootstraps GameObjectContexts after SceneContexts, ensuring parent-before-child order.
     /// </summary>
     public static class Bootstrapper
     {
@@ -20,11 +22,15 @@ namespace TravisRFrench.Dependencies
         private static readonly Dictionary<string, SceneContext> pending = new(StringComparer.Ordinal);
 
         // initialized keys (avoid double init)
-        private static readonly HashSet<string> initialized = new(StringComparer.Ordinal);
+        private static readonly HashSet<string> initializedSceneKeys = new(StringComparer.Ordinal);
+
+        // initialized GameObjectContexts (avoid double init)
+        private static readonly HashSet<int> initializedGameObjectContextIds = new();
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void AfterSceneLoad()
         {
+            // If GlobalContext wasn't present, there is nothing to bootstrap.
             if (GlobalContext.Container == null || GlobalContext.ContextRegistry == null)
             {
                 return;
@@ -37,10 +43,20 @@ namespace TravisRFrench.Dependencies
             {
                 var scene = SceneManager.GetSceneAt(i);
                 if (!scene.isLoaded) continue;
+
                 EnqueueSceneContexts(scene);
             }
 
             TryInitializeAllPending(logUnresolved: true);
+
+            // After scene contexts initialize, initialize GO contexts.
+            for (int i = 0; i < SceneManager.sceneCount; i++)
+            {
+                var scene = SceneManager.GetSceneAt(i);
+                if (!scene.isLoaded) continue;
+
+                InitializeGameObjectContexts(scene);
+            }
         }
 
         private static void HookOnce()
@@ -48,21 +64,30 @@ namespace TravisRFrench.Dependencies
             if (hooked) return;
             hooked = true;
 
-            SceneManager.sceneLoaded += (_, __) =>
+            SceneManager.sceneLoaded += (scene, _) =>
             {
-                // after any scene load, enqueue and retry
-                var scene = SceneManager.GetActiveScene();
+                // Enqueue contexts for the scene that just loaded.
                 EnqueueSceneContexts(scene);
 
-                // also enqueue any other loaded scenes (covers additive loads where active scene isn't the new one)
+                // Also enqueue any other loaded scenes (covers additive loads).
                 for (int i = 0; i < SceneManager.sceneCount; i++)
                 {
                     var s = SceneManager.GetSceneAt(i);
                     if (!s.isLoaded) continue;
+
                     EnqueueSceneContexts(s);
                 }
 
                 TryInitializeAllPending(logUnresolved: true);
+
+                // After scene contexts initialize, initialize GO contexts.
+                for (int i = 0; i < SceneManager.sceneCount; i++)
+                {
+                    var s = SceneManager.GetSceneAt(i);
+                    if (!s.isLoaded) continue;
+
+                    InitializeGameObjectContexts(s);
+                }
             };
         }
 
@@ -82,7 +107,7 @@ namespace TravisRFrench.Dependencies
                     throw new InvalidOperationException($"[DI] SceneContext in scene '{scene.name}' has an empty key.");
                 }
 
-                if (initialized.Contains(ctx.Key))
+                if (initializedSceneKeys.Contains(ctx.Key))
                 {
                     continue;
                 }
@@ -97,9 +122,9 @@ namespace TravisRFrench.Dependencies
 
                 pending[ctx.Key] = ctx;
 
-                // Ensure the context instance is in the registry so others can reference it by key.
-                // IMPORTANT: if Register throws on duplicate keys, you need TryRegister/RegisterOrReplace.
-                GlobalContext.ContextRegistry.Register(ctx.Key, ctx);
+                // IMPORTANT:
+                // Do NOT register here; SceneContext.Awake() already registers.
+                // Registering again can throw if the registry doesn't support duplicates.
             }
         }
 
@@ -132,14 +157,13 @@ namespace TravisRFrench.Dependencies
 
                     ctx.Initialize(parent);
 
-                    initialized.Add(ctx.Key);
+                    initializedSceneKeys.Add(ctx.Key);
                     pending.Remove(ctx.Key);
                     madeProgress = true;
                 }
             }
             while (madeProgress);
 
-            // Optional: warn if something is still pending
             if (logUnresolved && pending.Count > 0)
             {
                 foreach (var ctx in pending.Values.OrderBy(c => c.Key, StringComparer.Ordinal))
@@ -175,6 +199,78 @@ namespace TravisRFrench.Dependencies
 
             parent = parentContext.Container;
             return true;
+        }
+
+        private static void InitializeGameObjectContexts(Scene scene)
+        {
+            var activeSceneContext = GetActiveSceneContextForScene(scene);
+
+            // If this scene has no SceneContext (or it hasn't been initialized yet), skip for now.
+            if (activeSceneContext == null || activeSceneContext.Container == null)
+            {
+                return;
+            }
+
+            var goContexts = GameObject.FindObjectsByType<GameObjectContext>(
+                    FindObjectsInactive.Include,
+                    FindObjectsSortMode.InstanceID
+                )
+                .Where(c => c != null && c.gameObject.scene == scene)
+                .ToArray();
+
+            // Parent-before-child: sort by transform depth, then InstanceID for determinism.
+            Array.Sort(goContexts, (a, b) =>
+            {
+                int da = GetDepth(a.transform);
+                int db = GetDepth(b.transform);
+
+                int cmp = da.CompareTo(db);
+                return cmp != 0 ? cmp : a.GetInstanceID().CompareTo(b.GetInstanceID());
+            });
+
+            foreach (var ctx in goContexts)
+            {
+                int id = ctx.GetInstanceID();
+                if (initializedGameObjectContextIds.Contains(id))
+                {
+                    continue;
+                }
+
+                ctx.Initialize(activeSceneContext.Container);
+                initializedGameObjectContextIds.Add(id);
+            }
+        }
+
+        private static SceneContext GetActiveSceneContextForScene(Scene scene)
+        {
+            // Deterministic selection rule:
+            // Pick the SceneContext in this scene with the lowest InstanceID.
+            // (If you want exactly one per scene, enforce that here.)
+            var contexts = GameObject.FindObjectsByType<SceneContext>(
+                    FindObjectsInactive.Include,
+                    FindObjectsSortMode.InstanceID
+                )
+                .Where(c => c != null && c.gameObject.scene == scene)
+                .OrderBy(c => c.GetInstanceID())
+                .ToList();
+
+            if (contexts.Count == 0)
+            {
+                return null;
+            }
+
+            return contexts[0];
+        }
+
+        private static int GetDepth(Transform t)
+        {
+            int depth = 0;
+            while (t.parent != null)
+            {
+                depth++;
+                t = t.parent;
+            }
+            return depth;
         }
     }
 }
