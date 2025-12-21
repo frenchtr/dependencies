@@ -27,9 +27,11 @@ namespace TravisRFrench.Dependencies
         // initialized GameObjectContexts (avoid double init)
         private static readonly HashSet<int> initializedGameObjectContextIds = new();
 
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-        private static void AfterSceneLoad()
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+        private static void BeforeSceneLoad()
         {
+            GlobalContext.Initialize();
+            
             // If GlobalContext wasn't present, there is nothing to bootstrap.
             if (GlobalContext.Container == null || GlobalContext.ContextRegistry == null)
             {

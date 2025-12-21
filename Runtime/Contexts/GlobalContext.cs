@@ -30,9 +30,8 @@ namespace TravisRFrench.Dependencies.Contexts
         public static IContainer Container => container;
 
         public static IContextRegistry ContextRegistry => contextRegistry;
-
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
-        private static void Initialize()
+        
+        internal static void Initialize()
         {
             if (isInitialized)
             {
