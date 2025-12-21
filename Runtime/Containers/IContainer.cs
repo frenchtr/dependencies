@@ -1,3 +1,4 @@
+using TravisRFrench.Dependencies.Containers.Registration;
 using TravisRFrench.Dependencies.Injection;
 using TravisRFrench.Dependencies.Registration;
 using TravisRFrench.Dependencies.Resolution;

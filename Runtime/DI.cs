@@ -1,5 +1,6 @@
 using System;
 using TravisRFrench.Dependencies.Containers;
+using TravisRFrench.Dependencies.Containers.Registration;
 using TravisRFrench.Dependencies.Contexts;
 using TravisRFrench.Dependencies.Injection;
 using UnityEngine;
@@ -15,6 +16,8 @@ namespace TravisRFrench.Dependencies
 		/// Gets the global container initialized by <see cref="GlobalContext"/> at runtime.
 		/// </summary>
 		public static IContainer Container => GlobalContext.Container;
+		
+		public static IContextRegistry ContextRegistry => GlobalContext.ContextRegistry;
 
 		/// <summary>
 		/// Injects all <see cref="InjectAttribute"/> dependencies into the given target object using the provided container.

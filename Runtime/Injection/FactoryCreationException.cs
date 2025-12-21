@@ -1,7 +1,6 @@
 ﻿using System;
-using TravisRFrench.Dependencies.Injection;
 
-namespace TravisRFrench.Dependencies.Resolution
+namespace TravisRFrench.Dependencies.Injection
 {
 	public class FactoryCreationException : ObjectCreationException
 	{

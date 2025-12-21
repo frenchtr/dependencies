@@ -39,7 +39,9 @@ namespace TravisRFrench.Dependencies.Containers
 		/// <inheritdoc/>>
 		public IContainer CreateChildContainer()
 		{
-			return new Container(this);
+			var container = new Container(this);
+			
+			return container;
 		}
 
 		/// <inheritdoc />

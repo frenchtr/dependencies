@@ -5,6 +5,6 @@ namespace TravisRFrench.Dependencies.Samples
 {
 	public interface IThreatService
 	{
-		GameObject GetHighestThreatTarget(IEnumerable<GameObject> candidates);
+		GameObject GetEnemyWithHighestThreat(GameObject requestor, IEnumerable<GameObject> candidates);
 	}
 }

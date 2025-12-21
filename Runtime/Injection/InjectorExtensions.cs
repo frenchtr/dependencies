@@ -1,7 +1,6 @@
 ﻿using System;
-using TravisRFrench.Dependencies.Injection;
 
-namespace TravisRFrench.Dependencies.dependencies.Runtime.Injection
+namespace TravisRFrench.Dependencies.Injection
 {
 	public static class InjectorExtensions
 	{

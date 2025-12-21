@@ -8,56 +8,60 @@ using Object = UnityEngine.Object;
 namespace TravisRFrench.Dependencies.Contexts
 {
     /// <summary>
-    /// Provides a scene-level DI container that inherits from the global context.
-    /// Installs all bindings from <see cref="MonoInstaller"/> and <see cref="ScriptableInstaller"/> sources,
-    /// and injects all scene objects automatically on load.
+    /// Provides a scene-level DI container that inherits from a parent context container
+    /// (or the GlobalContext container by default). Initialization is deterministic and
+    /// performed by GlobalContext after the scene loads.
     /// </summary>
     [DefaultExecutionOrder(-9999)]
     public class SceneContext : MonoBehaviour, IContext
     {
-        [SerializeField]
-        private List<MonoInstaller> monoInstallers;
-        [SerializeField]
-        private List<ScriptableInstaller> scriptableInstallers;
+        [Header("Keys")]
+        [SerializeField] private string key;
+        [SerializeField] private string parentKey;
+        [Header("Installers")]
+        [SerializeField] private List<MonoInstaller> monoInstallers;
+        [SerializeField] private List<ScriptableInstaller> scriptableInstallers;
 
-        private static SceneContext Instance { get; set; }
+        public string Key => this.key;
+        public string ParentKey => this.parentKey;
 
         /// <inheritdoc/>
         public IContainer Container { get; private set; }
 
+        private List<IInstaller> allInstallers;
+
         private void Awake()
         {
-            if (Instance != null && Instance != this)
+            // Phase 1: Register the context instance only (no container creation).
+            // This is what makes parent lookup deterministic later.
+            GlobalContext.ContextRegistry.Register(this.key, this);
+
+            // Cache installers now; install later during Initialize().
+            this.allInstallers = new List<IInstaller>();
+            if (this.monoInstallers != null) this.allInstallers.AddRange(this.monoInstallers);
+            if (this.scriptableInstallers != null) this.allInstallers.AddRange(this.scriptableInstallers);
+        }
+
+        /// <summary>
+        /// Phase 2: Called by GlobalContext after scene load, in deterministic order.
+        /// </summary>
+        internal void Initialize(IContainer parent)
+        {
+            if (this.Container != null)
             {
-                Debug.LogWarning("[DI] Multiple SceneContext instances found. Only one will be active.");
-                Destroy(this);
+                // Guard against double-initialization.
                 return;
             }
 
-            Instance = this;
-
-            var parent = GlobalContext.Container;
             this.Container = parent.CreateChildContainer();
 
-            this.InstallBindings();
-            this.InjectSceneObjects();
+            InstallBindings();
+            InjectSceneObjects();
         }
 
         private void InstallBindings()
         {
-            var allInstallers = new List<IInstaller>();
-
-            if (this.monoInstallers != null)
-            {
-                allInstallers.AddRange(this.monoInstallers);
-            }
-
-            if (this.scriptableInstallers != null)
-            {
-                allInstallers.AddRange(this.scriptableInstallers);
-            }
-
-            foreach (var installer in allInstallers)
+            foreach (var installer in this.allInstallers)
             {
                 try
                 {
@@ -73,14 +77,24 @@ namespace TravisRFrench.Dependencies.Contexts
 
         private void InjectSceneObjects()
         {
-            var objects = FindObjectsByType<Object>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            var sceneContextScene = this.gameObject.scene;
+
+            // NOTE: This is intentionally performed after all contexts are initialized for the scene.
+            var objects = FindObjectsByType<Object>(FindObjectsInactive.Include, FindObjectsSortMode.InstanceID);
 
             foreach (var obj in objects)
             {
-                if (obj is MonoBehaviour or ScriptableObject)
+                if (obj is not MonoBehaviour monoBehaviour)
                 {
-                    this.Container.Inject(obj);
+                    continue;
                 }
+
+                if (monoBehaviour.gameObject.scene != sceneContextScene)
+                {
+                    continue;
+                }
+
+                this.Container.Inject(obj);
             }
         }
     }

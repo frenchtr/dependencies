@@ -48,23 +48,20 @@ namespace TravisRFrench.Dependencies.Resolution
 			{
 				throw new ArgumentNullException(nameof(type));
 			}
-			
+
 			try
 			{
-				IBinding binding;
-
-				try
+				if (!this.registry.TryGetBinding(type, out var binding, context))
 				{
-					if (!this.registry.TryGetBinding(type, out binding, context))
+					if (this.parent != null)
 					{
-						var instance = this.parent.Resolve(type, context);
-						return instance;
+						return this.parent.Resolve(type, context);
 					}
-				}
-				catch (Exception exception)
-				{
-					throw new BindingNotFoundException(this, type,
-						"Unable to find a suitable binding in the container or any parent.", exception);
+
+					throw new BindingNotFoundException(
+						this,
+						type,
+						"Unable to find a suitable binding in the container or any parent.");
 				}
 
 				if (binding.Lifetime == Lifetime.Singleton)
@@ -80,10 +77,14 @@ namespace TravisRFrench.Dependencies.Resolution
 
 				return this.GetInstance(binding, context);
 			}
+			catch (BindingNotFoundException)
+			{
+				throw;
+			}
 			catch (Exception exception)
 			{
-				var suffix = (type == null) ? string.Empty : $" of type {type.Name}";
-				throw new TypeResolutionException(this, type, $"Unable to resolve binding{suffix}.", exception);
+				throw new TypeResolutionException(
+					this, type, $"Unable to resolve binding of type {type.Name}.", exception);
 			}
 		}
 		
