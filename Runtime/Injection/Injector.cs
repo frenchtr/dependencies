@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using TravisRFrench.Dependencies.Containers;
@@ -13,8 +14,9 @@ namespace TravisRFrench.Dependencies.Injection
 	public class Injector : IInjector
 	{
 		private readonly IContainer container;
+		
+		private const BindingFlags Flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly;
 
-		private const BindingFlags Flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
 
 		/// <summary>
 		/// Creates a new injector using the given container for resolution.
@@ -28,21 +30,26 @@ namespace TravisRFrench.Dependencies.Injection
 		/// <inheritdoc/>
 		public void Inject(object obj)
 		{
-			if (obj == null)
-			{
-				throw new ArgumentNullException(nameof(obj));
-			}
-			
+			if (obj == null) throw new ArgumentNullException(nameof(obj));
+
 			try
 			{
-				var type = obj.GetType();
-				this.InjectFields(obj, type);
-				this.InjectProperties(obj, type);
-				this.InjectMethods(obj, type);
+				// Base-first is often safer for method/property injection semantics.
+				var stack = new Stack<Type>();
+				for (var t = obj.GetType(); t != null && t != typeof(object); t = t.BaseType)
+					stack.Push(t);
+
+				while (stack.Count > 0)
+				{
+					var type = stack.Pop();
+					this.InjectFields(obj, type);
+					this.InjectProperties(obj, type);
+					this.InjectMethods(obj, type);
+				}
 			}
-			catch (Exception exception)
+			catch (Exception ex)
 			{
-				throw new InjectionException(this, $"Failed to inject object of type '{obj.GetType().Name}'.", exception);
+				throw new InjectionException(this, $"Failed to inject object of type '{obj.GetType().Name}'.", ex);
 			}
 		}
 
@@ -240,21 +247,21 @@ namespace TravisRFrench.Dependencies.Injection
 		private FieldInfo[] GetInjectableFields(Type type)
 		{
 			return type.GetFields(Flags)
-				.Where(f => f.IsDefined(typeof(InjectAttribute)))
+				.Where(f => f.IsDefined(typeof(InjectAttribute), false))
 				.ToArray();
 		}
 
 		private PropertyInfo[] GetInjectableProperties(Type type)
 		{
 			return type.GetProperties(Flags)
-				.Where(p => p.IsDefined(typeof(InjectAttribute)))
+				.Where(p => p.IsDefined(typeof(InjectAttribute), false))
 				.ToArray();
 		}
 
 		private MethodInfo[] GetInjectableMethods(Type type)
 		{
 			return type.GetMethods(Flags)
-				.Where(m => m.IsDefined(typeof(InjectAttribute)))
+				.Where(m => m.IsDefined(typeof(InjectAttribute), false))
 				.ToArray();
 		}
 	}
