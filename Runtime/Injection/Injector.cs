@@ -63,7 +63,7 @@ namespace TravisRFrench.Dependencies.Injection
 			try
 			{
 				var constructors = type
-					.GetConstructors(BindingFlags.Public | BindingFlags.Instance)
+					.GetConstructors(Flags)
 					.OrderBy(c => c.GetParameters().Length);
 
 				foreach (var constructor in constructors)
