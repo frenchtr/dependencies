@@ -18,8 +18,6 @@ namespace TravisRFrench.Dependencies.Contexts
 
         public IContainer Container { get; private set; }
 
-        private List<IInstaller> allInstallers;
-
         private bool registered;
 
         private void Awake()
@@ -33,11 +31,6 @@ namespace TravisRFrench.Dependencies.Contexts
                 GlobalContext.ContextRegistry.Register(this.Key, this);
                 this.registered = true;
             }
-
-            // Cache installers now; install later during Initialize().
-            this.allInstallers = new List<IInstaller>();
-            if (this.monoInstallers != null) this.allInstallers.AddRange(this.monoInstallers);
-            if (this.scriptableInstallers != null) this.allInstallers.AddRange(this.scriptableInstallers);
         }
 
         private void OnDestroy()
@@ -102,7 +95,9 @@ namespace TravisRFrench.Dependencies.Contexts
 
         private void InstallBindings()
         {
-            foreach (var installer in this.allInstallers)
+            var allInstallers = this.GetAllInstallers();
+            
+            foreach (var installer in allInstallers)
             {
                 try
                 {
@@ -142,6 +137,23 @@ namespace TravisRFrench.Dependencies.Contexts
 
                 this.Container.Inject((Object)mb);
             }
+        }
+
+        private IEnumerable<IInstaller> GetAllInstallers()
+        {
+            var allInstallers = new List<IInstaller>();
+            
+            if (this.monoInstallers != null)
+            {
+                allInstallers.AddRange(this.monoInstallers);
+            }
+            
+            if (this.scriptableInstallers != null)
+            {
+                allInstallers.AddRange(this.scriptableInstallers);
+            }
+
+            return allInstallers;
         }
     }
 }

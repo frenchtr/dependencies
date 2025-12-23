@@ -44,7 +44,10 @@ namespace TravisRFrench.Dependencies
             for (int i = 0; i < SceneManager.sceneCount; i++)
             {
                 var scene = SceneManager.GetSceneAt(i);
-                if (!scene.isLoaded) continue;
+                if (!scene.isLoaded)
+                {
+                    continue;
+                }
 
                 EnqueueSceneContexts(scene);
             }
@@ -55,7 +58,10 @@ namespace TravisRFrench.Dependencies
             for (int i = 0; i < SceneManager.sceneCount; i++)
             {
                 var scene = SceneManager.GetSceneAt(i);
-                if (!scene.isLoaded) continue;
+                if (!scene.isLoaded)
+                {
+                    continue;
+                }
 
                 InitializeGameObjectContexts(scene);
             }
@@ -63,7 +69,10 @@ namespace TravisRFrench.Dependencies
 
         private static void HookOnce()
         {
-            if (hooked) return;
+            if (hooked)
+            {
+                return;
+            }
             hooked = true;
 
             SceneManager.sceneLoaded += (scene, _) =>
@@ -75,7 +84,10 @@ namespace TravisRFrench.Dependencies
                 for (int i = 0; i < SceneManager.sceneCount; i++)
                 {
                     var s = SceneManager.GetSceneAt(i);
-                    if (!s.isLoaded) continue;
+                    if (!s.isLoaded)
+                    {
+                        continue;
+                    }
 
                     EnqueueSceneContexts(s);
                 }
@@ -86,7 +98,10 @@ namespace TravisRFrench.Dependencies
                 for (int i = 0; i < SceneManager.sceneCount; i++)
                 {
                     var s = SceneManager.GetSceneAt(i);
-                    if (!s.isLoaded) continue;
+                    if (!s.isLoaded)
+                    {
+                        continue;
+                    }
 
                     InitializeGameObjectContexts(s);
                 }

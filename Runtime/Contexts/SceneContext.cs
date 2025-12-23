@@ -22,7 +22,6 @@ namespace TravisRFrench.Dependencies.Contexts
         [Header("Installers")]
         [SerializeField] private List<MonoInstaller> monoInstallers;
         [SerializeField] private List<ScriptableInstaller> scriptableInstallers;
-        private List<IInstaller> allInstallers;
 
         public string Key => this.key;
         public string ParentKey => this.parentKey;
@@ -38,11 +37,6 @@ namespace TravisRFrench.Dependencies.Contexts
             // Phase 1: Register the context instance only (no container creation).
             // This is what makes parent lookup deterministic later.
             GlobalContext.ContextRegistry.Register(this.key, this);
-
-            // Cache installers now; install later during Initialize().
-            this.allInstallers = new List<IInstaller>();
-            if (this.monoInstallers != null) this.allInstallers.AddRange(this.monoInstallers);
-            if (this.scriptableInstallers != null) this.allInstallers.AddRange(this.scriptableInstallers);
         }
 
         private void OnDestroy()
@@ -73,7 +67,9 @@ namespace TravisRFrench.Dependencies.Contexts
 
         private void InstallBindings()
         {
-            foreach (var installer in this.allInstallers)
+            var allInstallers = this.GetAllInstallers();
+            
+            foreach (var installer in allInstallers)
             {
                 try
                 {
@@ -115,6 +111,23 @@ namespace TravisRFrench.Dependencies.Contexts
 
                 this.Container.Inject(obj);
             }
+        }
+        
+        private IEnumerable<IInstaller> GetAllInstallers()
+        {
+            var allInstallers = new List<IInstaller>();
+            
+            if (this.monoInstallers != null)
+            {
+                allInstallers.AddRange(this.monoInstallers);
+            }
+            
+            if (this.scriptableInstallers != null)
+            {
+                allInstallers.AddRange(this.scriptableInstallers);
+            }
+
+            return allInstallers;
         }
     }
 }

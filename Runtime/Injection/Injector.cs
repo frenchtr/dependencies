@@ -30,7 +30,10 @@ namespace TravisRFrench.Dependencies.Injection
 		/// <inheritdoc/>
 		public void Inject(object obj)
 		{
-			if (obj == null) throw new ArgumentNullException(nameof(obj));
+			if (obj == null)
+			{
+				throw new ArgumentNullException(nameof(obj));
+			}
 
 			try
 			{
