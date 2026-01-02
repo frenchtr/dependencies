@@ -176,6 +176,12 @@ namespace TravisRFrench.Dependencies.Bindings
 			return this.Register();
 		}
 
+		/// <inheritdoc/>
+		public IBindingBuilder WhenNamed(string name)
+		{
+			return this.When(ctx => (ctx.MemberName == name) || (ctx.ParameterName == name));
+		}
+
 		/// <summary>
 		/// Registers the constructed binding with the container.
 		/// </summary>
