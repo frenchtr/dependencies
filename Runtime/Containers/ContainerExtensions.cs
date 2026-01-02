@@ -20,19 +20,6 @@ namespace TravisRFrench.Dependencies.Containers
 		}
 
 		/// <summary>
-		/// Begins a binding between an interface and implementation using generic types.
-		/// </summary>
-		/// <typeparam name="TInterface">The interface type to bind.</typeparam>
-		/// <typeparam name="TImplementation">The concrete type implementing <typeparamref name="TInterface"/>.</typeparam>
-		/// <param name="container">The container on which to register the binding.</param>
-		/// <returns>A binding builder for fluent configuration.</returns>
-		public static BindingBuilder<TInterface, TImplementation> Bind<TInterface, TImplementation>(this IContainer container)
-			where TImplementation : TInterface
-		{
-			return new BindingBuilder<TInterface, TImplementation>(container);
-		}
-
-		/// <summary>
 		/// Begins a binding for a specified interface type using reflection.
 		/// </summary>
 		/// <param name="container">The container on which to register the binding.</param>
@@ -41,28 +28,6 @@ namespace TravisRFrench.Dependencies.Containers
 		public static IBindingBuilder Bind(this IContainer container, Type interfaceType)
 		{
 			return new BindingBuilder(container, interfaceType);
-		}
-
-		/// <summary>
-		/// Begins a binding between two specified types using reflection.
-		/// </summary>
-		/// <param name="container">The container on which to register the binding.</param>
-		/// <param name="interfaceType">The interface type to bind.</param>
-		/// <param name="implementationType">The concrete implementation type.</param>
-		/// <returns>A binding builder for fluent configuration.</returns>
-		public static IBindingBuilder Bind(this IContainer container, Type interfaceType, Type implementationType)
-		{
-			return new BindingBuilder(container, interfaceType, implementationType);
-		}
-
-		/// <summary>
-		/// Unregisters a binding for the specified generic interface type.
-		/// </summary>
-		/// <typeparam name="TInterface">The interface type to remove from the container.</typeparam>
-		/// <param name="container">The container to modify.</param>
-		public static void Unregister<TInterface>(this IContainer container)
-		{
-			container.Unregister(typeof(TInterface));
 		}
 
 		/// <summary>
