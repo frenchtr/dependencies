@@ -17,17 +17,6 @@ namespace TravisRFrench.Dependencies.Bindings
 			: base(container, interfaceType)
 		{
 		}
-
-		/// <summary>
-		/// Constructs a binding builder with both interface and implementation types.
-		/// </summary>
-		/// <param name="container">The container where the binding will be registered.</param>
-		/// <param name="interfaceType">The interface type to bind.</param>
-		/// <param name="implementationType">The implementation type to bind to.</param>
-		public BindingBuilder(IContainer container, Type interfaceType, Type implementationType)
-			: base(container, interfaceType, implementationType)
-		{
-		}
 	}
 
 	/// <summary>
@@ -42,33 +31,6 @@ namespace TravisRFrench.Dependencies.Bindings
 		/// <param name="container">The container where the binding will be registered.</param>
 		public BindingBuilder(IContainer container)
 			: base(container, typeof(TInterface))
-		{
-		}
-
-		/// <summary>
-		/// Constructs a binding builder with an explicit implementation type.
-		/// </summary>
-		/// <param name="container">The container where the binding will be registered.</param>
-		/// <param name="implementationType">The implementation type to bind to.</param>
-		public BindingBuilder(IContainer container, Type implementationType)
-			: base(container, typeof(TInterface), implementationType)
-		{
-		}
-	}
-
-	/// <summary>
-	/// A generic binding builder for a specific interface-implementation pair.
-	/// </summary>
-	/// <typeparam name="TInterface">The interface type to bind.</typeparam>
-	/// <typeparam name="TImplementation">The concrete implementation type.</typeparam>
-	public class BindingBuilder<TInterface, TImplementation> : BindingBuilderBase
-	{
-		/// <summary>
-		/// Constructs a binding builder for the specified interface and implementation types.
-		/// </summary>
-		/// <param name="container">The container where the binding will be registered.</param>
-		public BindingBuilder(IContainer container)
-			: base(container, typeof(TInterface), typeof(TImplementation))
 		{
 		}
 	}
