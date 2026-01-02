@@ -100,5 +100,12 @@ namespace TravisRFrench.Dependencies.Bindings
 		/// <param name="condition">The predicate to evaluate.</param>
 		/// <returns></returns>
 		IBindingBuilder When(Func<IInjectionContext, bool> condition);
+		
+		/// <summary>
+		/// Defines a required name of the injected member or parameter.
+		/// </summary>
+		/// <param name="name">The name of the injected member or parameter.</param>
+		/// <returns></returns>
+		IBindingBuilder WhenNamed(string name);
 	}
 }
