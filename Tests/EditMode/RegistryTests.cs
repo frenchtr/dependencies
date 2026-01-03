@@ -47,7 +47,7 @@ namespace TravisRFrench.Dependencies.Tests
 			this.container.Register(registeredBinding);
 			
 			/* WHEN */
-			this.container.Unregister<ITestServiceA>();
+			this.container.Unregister(typeof(ITestServiceA));
 			
 			/* THEN */
 			this.container.TryGetBinding<ITestServiceA>(out var actualBinding);
