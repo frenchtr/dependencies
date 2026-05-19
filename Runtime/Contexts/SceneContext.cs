@@ -9,12 +9,15 @@ namespace TravisRFrench.Dependencies.Contexts
 {
     /// <summary>
     /// Provides a scene-level DI container that inherits from a parent context container
-    /// (or the GlobalContext container by default). Initialization is deterministic and
-    /// performed by GlobalContext after the scene loads.
+    /// (or the GlobalContext container by default). Owns its full initialization lifecycle;
+    /// defers into a static pending list when a parent context is not yet available, then
+    /// retries all pending contexts via TryFlushPending() after each successful initialization.
     /// </summary>
-    [DefaultExecutionOrder(-9999)]
+    [DefaultExecutionOrder(-32000)]
     public class SceneContext : MonoBehaviour, IContext
     {
+        private static readonly List<SceneContext> pending = new();
+
         [Header("Keys")]
         [SerializeField] private string key;
         [SerializeField] private string parentKey;
@@ -34,42 +37,141 @@ namespace TravisRFrench.Dependencies.Contexts
 
         private void Awake()
         {
-            // Phase 1: Register the context instance only (no container creation).
-            // This is what makes parent lookup deterministic later.
+            if (string.IsNullOrWhiteSpace(this.key))
+            {
+                throw new InvalidOperationException(
+                    $"[DI] SceneContext on '{this.gameObject.name}' in scene '{this.gameObject.scene.name}' has an empty key."
+                );
+            }
+
             GlobalContext.ContextRegistry.Register(this.key, this);
+            this.TryInitialize();
         }
 
         private void OnDestroy()
         {
-            // Optional but recommended; avoids stale registry entries on scene unload.
             if (!string.IsNullOrWhiteSpace(this.key))
             {
                 GlobalContext.ContextRegistry.Unregister(this.key);
             }
+
+            pending.Remove(this);
+        }
+
+        private bool TryInitialize()
+        {
+            if (this.Container != null)
+            {
+                return false;
+            }
+
+            if (!GlobalContext.IsInitialized)
+            {
+                return false;
+            }
+
+            if (!this.TryResolveParentContainer(out var parent))
+            {
+                if (!pending.Contains(this))
+                {
+                    pending.Add(this);
+                }
+
+                return false;
+            }
+
+            this.Initialize(parent);
+            pending.Remove(this);
+            TryFlushPending();
+
+            return true;
+        }
+
+        private bool TryResolveParentContainer(out IContainer parent)
+        {
+            parent = null;
+
+            if (string.IsNullOrWhiteSpace(this.parentKey))
+            {
+                parent = GlobalContext.Container;
+                return true;
+            }
+
+            if (!GlobalContext.ContextRegistry.TryGet(this.parentKey, out var parentContext) || parentContext == null)
+            {
+                return false;
+            }
+
+            if (parentContext.Container == null)
+            {
+                return false;
+            }
+
+            parent = parentContext.Container;
+            return true;
+        }
+
+        private static void TryFlushPending()
+        {
+            bool madeProgress;
+            var passGuard = 0;
+
+            do
+            {
+                madeProgress = false;
+                passGuard++;
+
+                if (passGuard > 256)
+                {
+                    throw new InvalidOperationException(
+                        "[DI] SceneContext.TryFlushPending exceeded pass guard (256). Likely a parentKey cycle."
+                    );
+                }
+
+                // Iterate a snapshot to allow the list to be mutated during iteration.
+                for (var i = pending.Count - 1; i >= 0; i--)
+                {
+                    var ctx = pending[i];
+                    if (ctx.TryInitialize())
+                    {
+                        madeProgress = true;
+                    }
+                }
+            }
+            while (madeProgress);
+
+            if (pending.Count > 0)
+            {
+                foreach (var ctx in pending)
+                {
+                    Debug.LogWarning(
+                        $"[DI] SceneContext '{ctx.Key}' could not be initialized: parentKey '{ctx.ParentKey}' is not available. " +
+                        $"Scene: '{ctx.gameObject.scene.name}'."
+                    );
+                }
+            }
         }
 
         /// <summary>
-        /// Phase 2: Called by GlobalContext after scene load, in deterministic order.
+        /// Initializes this context's container as a child of the given parent container,
+        /// installs bindings, and injects scene objects.
         /// </summary>
         internal void Initialize(IContainer parent)
         {
             if (this.Container != null)
             {
-                // Guard against double-initialization.
                 return;
             }
 
             this.Container = parent.CreateChildContainer();
 
-            InstallBindings();
-            InjectSceneObjects();
+            this.InstallBindings();
+            this.InjectSceneObjects();
         }
 
         private void InstallBindings()
         {
-            var allInstallers = this.GetAllInstallers();
-            
-            foreach (var installer in allInstallers)
+            foreach (var installer in this.GetAllInstallers())
             {
                 try
                 {
@@ -87,7 +189,6 @@ namespace TravisRFrench.Dependencies.Contexts
         {
             var sceneContextScene = this.gameObject.scene;
 
-            // NOTE: This is intentionally performed after all contexts are initialized for the scene.
             var objects = FindObjectsByType<Object>(FindObjectsInactive.Include, FindObjectsSortMode.InstanceID);
 
             foreach (var obj in objects)
@@ -103,7 +204,6 @@ namespace TravisRFrench.Dependencies.Contexts
                 }
 
                 // IMPORTANT: GameObjectContexts own injection for their subtrees.
-                // This ensures GO-level resolution happens first for those objects.
                 if (monoBehaviour.GetComponentInParent<GameObjectContext>(true) != null)
                 {
                     continue;
@@ -112,16 +212,16 @@ namespace TravisRFrench.Dependencies.Contexts
                 this.Container.Inject(obj);
             }
         }
-        
+
         private IEnumerable<IInstaller> GetAllInstallers()
         {
             var allInstallers = new List<IInstaller>();
-            
+
             if (this.monoInstallers != null)
             {
                 allInstallers.AddRange(this.monoInstallers);
             }
-            
+
             if (this.scriptableInstallers != null)
             {
                 allInstallers.AddRange(this.scriptableInstallers);

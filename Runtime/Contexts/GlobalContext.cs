@@ -30,6 +30,8 @@ namespace TravisRFrench.Dependencies.Contexts
         public static IContainer Container => container;
 
         public static IContextRegistry ContextRegistry => contextRegistry;
+
+        internal static bool IsInitialized => isInitialized;
         
         internal static void Initialize()
         {

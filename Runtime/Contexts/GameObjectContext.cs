@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using TravisRFrench.Dependencies.Containers;
 using TravisRFrench.Dependencies.Installers;
@@ -7,9 +7,16 @@ using Object = UnityEngine.Object;
 
 namespace TravisRFrench.Dependencies.Contexts
 {
-    [DefaultExecutionOrder(-9998)]
+    /// <summary>
+    /// Provides a GameObject-level DI container that inherits from the nearest parent
+    /// GameObjectContext, or the owning SceneContext as the fallback. Owns its full
+    /// initialization lifecycle via Awake().
+    /// </summary>
+    [DefaultExecutionOrder(-31999)]
     public class GameObjectContext : MonoBehaviour, IContext
     {
+        private static readonly List<GameObjectContext> pending = new();
+
         [Header("Installers")]
         [SerializeField] private List<MonoInstaller> monoInstallers;
         [SerializeField] private List<ScriptableInstaller> scriptableInstallers;
@@ -22,15 +29,15 @@ namespace TravisRFrench.Dependencies.Contexts
 
         private void Awake()
         {
-            this.Key = GenerateKey();
+            this.Key = this.GenerateKey();
 
-            // Phase 1: register instance (no container yet).
-            // Guard avoids duplicate registration attempts for the same instance in edge cases.
             if (!this.registered)
             {
                 GlobalContext.ContextRegistry.Register(this.Key, this);
                 this.registered = true;
             }
+
+            this.TryInitialize();
         }
 
         private void OnDestroy()
@@ -40,27 +47,88 @@ namespace TravisRFrench.Dependencies.Contexts
                 GlobalContext.ContextRegistry.Unregister(this.Key);
                 this.registered = false;
             }
+
+            pending.Remove(this);
         }
 
-        internal void Initialize(IContainer activeSceneContainer)
+        private void TryInitialize()
         {
             if (this.Container != null)
             {
                 return;
             }
 
-            if (activeSceneContainer == null)
+            var parentContainer = this.ResolveParentContainer();
+
+            // Defensive: SceneContext at -32000 guarantees it runs before this at -31999,
+            // so a null parent container is only reachable in unusual runtime circumstances.
+            if (parentContainer == null)
+            {
+                if (!pending.Contains(this))
+                {
+                    pending.Add(this);
+                }
+
+                return;
+            }
+
+            this.Initialize(parentContainer);
+            pending.Remove(this);
+        }
+
+        private IContainer ResolveParentContainer()
+        {
+            // Walk up the hierarchy for the nearest initialized GameObjectContext.
+            var t = this.transform.parent;
+            while (t != null)
+            {
+                if (t.TryGetComponent<GameObjectContext>(out var parentContext))
+                {
+                    return parentContext.Container;
+                }
+
+                t = t.parent;
+            }
+
+            // Fall back to the SceneContext that belongs to the same scene.
+            // GetComponentInParent is intentionally NOT used here — a GameObjectContext
+            // root is not required to be a child of the SceneContext GameObject in the hierarchy.
+            var thisScene = this.gameObject.scene;
+            var sceneContexts = FindObjectsByType<SceneContext>(FindObjectsInactive.Include, FindObjectsSortMode.InstanceID);
+
+            foreach (var sc in sceneContexts)
+            {
+                if (sc.gameObject.scene == thisScene)
+                {
+                    return sc.Container;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Initializes this context's container as a child of the given parent container,
+        /// installs bindings, and injects objects within this subtree.
+        /// </summary>
+        internal void Initialize(IContainer parentContainer)
+        {
+            if (this.Container != null)
+            {
+                return;
+            }
+
+            if (parentContainer == null)
             {
                 throw new InvalidOperationException(
-                    "[DI] GameObjectContext requires an activeSceneContainer, but Initialize() was called with null."
+                    "[DI] GameObjectContext requires a parent container, but Initialize() was called with null."
                 );
             }
 
-            var parentContainer = ResolveParentContainer(activeSceneContainer);
             this.Container = parentContainer.CreateChildContainer();
 
-            InstallBindings();
-            InjectHierarchyObjects();
+            this.InstallBindings();
+            this.InjectHierarchyObjects();
         }
 
         private string GenerateKey()
@@ -69,35 +137,9 @@ namespace TravisRFrench.Dependencies.Contexts
             return $"{scene.handle}/{this.gameObject.name}/{this.GetInstanceID()}";
         }
 
-        private IContainer ResolveParentContainer(IContainer activeSceneContainer)
-        {
-            var t = this.transform.parent;
-            while (t != null)
-            {
-                if (t.TryGetComponent<GameObjectContext>(out var parentContext))
-                {
-                    if (parentContext.Container == null)
-                    {
-                        throw new InvalidOperationException(
-                            $"[DI] Parent GameObjectContext '{parentContext.Key}' has not been initialized yet. " +
-                            "Bootstrap order must initialize parents before children."
-                        );
-                    }
-
-                    return parentContext.Container;
-                }
-
-                t = t.parent;
-            }
-
-            return activeSceneContainer;
-        }
-
         private void InstallBindings()
         {
-            var allInstallers = this.GetAllInstallers();
-            
-            foreach (var installer in allInstallers)
+            foreach (var installer in this.GetAllInstallers())
             {
                 try
                 {
@@ -142,12 +184,12 @@ namespace TravisRFrench.Dependencies.Contexts
         private IEnumerable<IInstaller> GetAllInstallers()
         {
             var allInstallers = new List<IInstaller>();
-            
+
             if (this.monoInstallers != null)
             {
                 allInstallers.AddRange(this.monoInstallers);
             }
-            
+
             if (this.scriptableInstallers != null)
             {
                 allInstallers.AddRange(this.scriptableInstallers);
