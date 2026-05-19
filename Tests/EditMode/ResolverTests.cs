@@ -1,4 +1,4 @@
-﻿using NUnit.Framework;
+using NUnit.Framework;
 using TravisRFrench.Dependencies.Containers;
 using TravisRFrench.Dependencies.Injection;
 using TravisRFrench.Dependencies.Resolution;
@@ -108,8 +108,7 @@ namespace TravisRFrench.Dependencies.Tests
 			}
 
 			/* THEN */
-			var exception = Assert.Throws<TypeResolutionException>(Resolve);
-			Assert.IsInstanceOf<BindingNotFoundException>(exception.InnerException);
+			Assert.Throws<BindingNotFoundException>(Resolve);
 		}
 
 		[Test]
@@ -128,8 +127,7 @@ namespace TravisRFrench.Dependencies.Tests
 			}
 
 			/* THEN */
-			var exception = Assert.Throws<TypeResolutionException>(Resolve);
-			Assert.IsInstanceOf<BindingNotFoundException>(exception.InnerException);
+			Assert.Throws<BindingNotFoundException>(Resolve);
 		}
 		
 		[Test]
