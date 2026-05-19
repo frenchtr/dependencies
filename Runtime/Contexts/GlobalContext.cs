@@ -84,8 +84,8 @@ namespace TravisRFrench.Dependencies.Contexts
                 }
                 catch (Exception e)
                 {
-                    Debug.LogError($"[DI] Installer {installer.name} failed:\n{e}");
-                    throw;
+                    Debug.LogError($"[DI Binding] Global installer '{installer.name}' " +
+                                   $"failed to install bindings:\n{e}");
                 }
             }
         }

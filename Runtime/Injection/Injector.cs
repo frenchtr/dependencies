@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection;
 using TravisRFrench.Dependencies.Containers;
 using TravisRFrench.Dependencies.Resolution;
+using UnityEngine;
 
 namespace TravisRFrench.Dependencies.Injection
 {
@@ -35,24 +36,17 @@ namespace TravisRFrench.Dependencies.Injection
 				throw new ArgumentNullException(nameof(obj));
 			}
 
-			try
-			{
-				// Base-first is often safer for method/property injection semantics.
-				var stack = new Stack<Type>();
-				for (var t = obj.GetType(); t != null && t != typeof(object); t = t.BaseType)
-					stack.Push(t);
+			// Base-first is often safer for method/property injection semantics.
+			var stack = new Stack<Type>();
+			for (var t = obj.GetType(); t != null && t != typeof(object); t = t.BaseType)
+				stack.Push(t);
 
-				while (stack.Count > 0)
-				{
-					var type = stack.Pop();
-					this.InjectFields(obj, type);
-					this.InjectProperties(obj, type);
-					this.InjectMethods(obj, type);
-				}
-			}
-			catch (Exception ex)
+			while (stack.Count > 0)
 			{
-				throw new InjectionException(this, $"Failed to inject object of type '{obj.GetType().Name}'.", ex);
+				var type = stack.Pop();
+				this.InjectFields(obj, type);
+				this.InjectProperties(obj, type);
+				this.InjectMethods(obj, type);
 			}
 		}
 
@@ -160,9 +154,29 @@ namespace TravisRFrench.Dependencies.Injection
 					var value = this.container.Resolve(field.FieldType, context);
 					field.SetValue(obj, value);
 				}
-				catch (Exception exception)
+				catch (BindingNotFoundException ex)
 				{
-					throw new FieldInjectionException(this, field, $"Failed to inject field '{field.Name}' of type {field.FieldType}.", exception);
+					Debug.LogException(new FieldInjectionException(
+						this, field,
+						$"[DI] No binding registered for '{field.FieldType.Name}' " +
+						$"(field '{field.Name}' on '{type.Name}').", ex),
+						obj as UnityEngine.Object);
+				}
+				catch (TypeResolutionException ex)
+				{
+					Debug.LogException(new FieldInjectionException(
+						this, field,
+						$"[DI] Failed to resolve '{field.FieldType.Name}' " +
+						$"(field '{field.Name}' on '{type.Name}').", ex),
+						obj as UnityEngine.Object);
+				}
+				catch (Exception ex)
+				{
+					Debug.LogException(new FieldInjectionException(
+						this, field,
+						$"[DI] Unexpected error injecting field '{field.Name}' " +
+						$"({field.FieldType.Name}) on '{type.Name}'.", ex),
+						obj as UnityEngine.Object);
 				}
 			}
 		}
@@ -190,9 +204,29 @@ namespace TravisRFrench.Dependencies.Injection
 					var value = this.container.Resolve(property.PropertyType, context);
 					property.SetValue(obj, value);
 				}
-				catch (Exception exception)
+				catch (BindingNotFoundException ex)
 				{
-					throw new PropertyInjectionException(this, property, $"Failed to inject property '{property.Name}' of type '{property.PropertyType}'.", exception);
+					Debug.LogException(new PropertyInjectionException(
+						this, property,
+						$"[DI] No binding registered for '{property.PropertyType.Name}' " +
+						$"(property '{property.Name}' on '{type.Name}').", ex),
+						obj as UnityEngine.Object);
+				}
+				catch (TypeResolutionException ex)
+				{
+					Debug.LogException(new PropertyInjectionException(
+						this, property,
+						$"[DI] Failed to resolve '{property.PropertyType.Name}' " +
+						$"(property '{property.Name}' on '{type.Name}').", ex),
+						obj as UnityEngine.Object);
+				}
+				catch (Exception ex)
+				{
+					Debug.LogException(new PropertyInjectionException(
+						this, property,
+						$"[DI] Unexpected error injecting property '{property.Name}' " +
+						$"({property.PropertyType.Name}) on '{type.Name}'.", ex),
+						obj as UnityEngine.Object);
 				}
 			}
 		}
@@ -240,9 +274,29 @@ namespace TravisRFrench.Dependencies.Injection
 
 					method.Invoke(obj, arguments);
 				}
-				catch (Exception exception)
+				catch (BindingNotFoundException ex)
 				{
-					throw new MethodInjectionException(this, method, $"Failed to inject method '{method.Name}'.", exception);
+					Debug.LogException(new MethodInjectionException(
+						this, method,
+						$"[DI] No binding registered for a parameter on method '{method.Name}' " +
+						$"on '{type.Name}'.", ex),
+						obj as UnityEngine.Object);
+				}
+				catch (TypeResolutionException ex)
+				{
+					Debug.LogException(new MethodInjectionException(
+						this, method,
+						$"[DI] Failed to resolve a parameter on method '{method.Name}' " +
+						$"on '{type.Name}'.", ex),
+						obj as UnityEngine.Object);
+				}
+				catch (Exception ex)
+				{
+					Debug.LogException(new MethodInjectionException(
+						this, method,
+						$"[DI] Unexpected error injecting method '{method.Name}' " +
+						$"on '{type.Name}'.", ex),
+						obj as UnityEngine.Object);
 				}
 			}
 		}

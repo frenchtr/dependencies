@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using TravisRFrench.Dependencies.Bindings;
 using TravisRFrench.Dependencies.Injection;
+using UnityEngine;
 
 namespace TravisRFrench.Dependencies.Registration
 {
@@ -64,8 +65,9 @@ namespace TravisRFrench.Dependencies.Registration
 					
 					return binding.Condition.Invoke(context);
 				}
-				catch
+				catch (Exception ex)
 				{
+					Debug.LogError($"[DI] Condition delegate for binding '{type.Name}' threw:\n{ex}");
 					binding = null;
 					return false;
 				}

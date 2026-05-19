@@ -147,8 +147,8 @@ namespace TravisRFrench.Dependencies.Contexts
                 }
                 catch (Exception e)
                 {
-                    Debug.LogError($"[DI] Installer {installer.GetType().Name} failed:\n{e}");
-                    throw;
+                    Debug.LogError($"[DI Binding] Installer '{installer.GetType().Name}' on GameObjectContext " +
+                                   $"'{this.gameObject.name}' failed to install bindings:\n{e}");
                 }
             }
         }
@@ -177,7 +177,14 @@ namespace TravisRFrench.Dependencies.Contexts
                     continue;
                 }
 
-                this.Container.Inject((Object)mb);
+                try
+                {
+                    this.Container.Inject((Object)mb);
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogException(ex, mb);
+                }
             }
         }
 

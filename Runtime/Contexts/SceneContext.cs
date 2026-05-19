@@ -179,8 +179,8 @@ namespace TravisRFrench.Dependencies.Contexts
                 }
                 catch (Exception e)
                 {
-                    Debug.LogError($"[DI] Installer {installer.GetType().Name} failed:\n{e}");
-                    throw;
+                    Debug.LogError($"[DI Binding] Installer '{installer.GetType().Name}' on SceneContext " +
+                                   $"'{this.key}' failed to install bindings:\n{e}");
                 }
             }
         }
@@ -209,7 +209,14 @@ namespace TravisRFrench.Dependencies.Contexts
                     continue;
                 }
 
-                this.Container.Inject(obj);
+                try
+                {
+                    this.Container.Inject(obj);
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogException(ex, monoBehaviour);
+                }
             }
         }
 
